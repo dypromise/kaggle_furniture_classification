@@ -185,7 +185,7 @@ def weighted_ensamble(preds_list, test_whole_file, new_csv):
         new_csv {[str]} --  final submittion csv file
     """
 
-    X, idxs = load_test_data(preds_list)
+    X, idxs = load_test_data(preds_list, mode='test')
     test_dataset = MyDataset(X, idxs)
     test_loader = torch.utils.data.DataLoader(
         test_dataset,
