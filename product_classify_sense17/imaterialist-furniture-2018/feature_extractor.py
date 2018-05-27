@@ -58,7 +58,7 @@ class FeatureExtractor(nn.Module):
         elif(model_name.startswith('inceptionv4')):
             x = self.avg_pool(x)
 
-        returnx.view(x.size(0), -1)
+        return x.view(x.size(0), -1)
 
 
 feature_extractor_dict = {
