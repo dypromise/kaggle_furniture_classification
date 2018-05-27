@@ -109,43 +109,6 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-class FeatureExtractor(nn.Module):
-
-    def __init__(self, submodule, extracted_layers):
-        """
-        Arguments:
-            submodule {nn.Module} -- parent moudle
-            extracted_layers {list} -- layer names list
-        """
-        super(FeatureExtractor, self).__init__()
-        self.submodule = submodule
-        self.extracted_layers = extracted_layers
-
-    def forward(self, x):
-        outputs = []
-        for name, module in self.submodule._modules.items():
-            if name is "last_linear":
-                x = x.view(1, -1)
-            x = module(x)
-            if name in self.extracted_layers:
-                outputs.append(x)
-        return outputs
-
-
-def extract_feature(model, data_loader, layer_name):
-    """
-    data_loader: must mot shuffle!
-    return: numpy list.
-    """
-    extractor = FeatureExtractor(model, [layer_name])
-    all_fts = []
-    with torch.no_grad():
-        for input, labels in data_loader:
-            outputs = extractor(input)
-            all_fts.extend(outputs[0].data.numpy())
-    return all_fts
-
-
 def accuracy(output, target, topk=(1,)):
     """Computes the precision@k for the specified values of k"""
     with torch.no_grad():

@@ -31,12 +31,9 @@ parser.add_argument('--test-predsfile', default='test_predictions.csv', type=str
                     help='train mode or test mode')
 
 
-best_prec1 = 0
-
-
 def main():
 
-    global args, best_prec1
+    global args
     args = parser.parse_args()
 
     train_dir = os.path.join(args.data, 'train_ori')
@@ -52,7 +49,6 @@ def main():
 
     furniture_model = fur_model.DY_Model(model_name=args.model_name, num_classes=fur_model.NB_CLASSES,
                                          checkpoint_file=args.checkpoint_file,
-                                         KFolds=1,
                                          batch_size=args.batch_size,
                                          input_size=args.input_size,
                                          add_size=args.add_size

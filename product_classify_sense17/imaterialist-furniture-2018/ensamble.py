@@ -72,7 +72,6 @@ class WeightedEnsambleModel(nn.Module):
     """
 
     def __init__(self, num_classes, num_models):
-
         super(WeightedEnsambleModel, self).__init__()
         self.num_models = num_models
         self.num_classes = num_classes
@@ -88,12 +87,12 @@ class WeightedEnsambleModel(nn.Module):
         return x
 
 
-def load_train_data(preds_list):
-    """ load split data parts from npys file list
-    Arguments:
-        preds_list {[list]} -- first satge npys file list
+def load_data(preds_list，mode='train'):
+    """ load data from npys, each npy file contains predictions of one model
+    Keyword Arguments:
+        preds_list，mode {str} -- [description] (default: {'train'})
     Returns:
-        [nparrays,] -- return X_train, y_train, X_test, y_test
+        [turple] -- if mode is `train`, return train_test_split data parts; if mode is `test`, return all data
     """
 
     X = []
@@ -105,29 +104,23 @@ def load_train_data(preds_list):
 
     # M * N * num_classes -> N * C * M
     X = np.transpose(np.array(X, dtype='float64'), (1, 2, 0))
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, labels, test_size=0.2)
-    return X_train, y_train, X_test, y_test
-
-
-def load_test_data(preds_list):
-    X = []
-    for i, pred in enumerate(preds_list):
-        arr = np.load(pred)
-        if(i == 0):
-            labels = np.array(arr[:, 0], dtype='int64').reshape((-1, 1))
-        X.append(np.array(arr[:, 1:], dtype='float64'))
-
-    # M * N * num_classes -> N * C * M
-    X = np.transpose(np.array(X, dtype='float64'), (1, 2, 0))
-    return X, labels
+    if(mode == 'train'):
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, labels, test_size=0.2)
+        return X_train, y_train, X_test, y_test
+    elif(mode == 'test')
+        return X, labels
+    else:
+        raise Exception(
+            "Attribute error: `mode` can only be either `train` or `test`")
 
 
 def train_ensamble():
     """ train func of weighted ensamble
     """
 
-    X_train, y_train, X_test, y_test = load_train_data(preds_list=p_list)
+    X_train, y_train, X_test, y_test = load_train_data(
+        preds_list=p_list, mode='train')
     train_dataset = MyDataset(X_train, y_train)
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
@@ -144,8 +137,8 @@ def train_ensamble():
         num_workers=4,
         pin_memory=True)
 
-    print(f'[+] trainning with total {len(train_dataset)} samples \n'
-          f'[+] validation with total {len(val_dataset)} samples')
+    print(f'[+] trainning with {len(train_dataset)} samples, '
+          f' validation with {len(val_dataset)} samples')
 
     model = WeightedEnsambleModel(num_classes, len(p_list))
     criterion = torch.nn.CrossEntropyLoss().cuda()
@@ -161,7 +154,7 @@ def train_ensamble():
         if patience == 3:
             patience = 0
             model.load_state_dict(torch.load(best_checkpoint_file))
-            lr = lr / 3
+            lr /= 3
             print(f'[+] set lr={lr}')
 
         optimizer = torch.optim.Adam(
@@ -170,7 +163,7 @@ def train_ensamble():
         # train for one epoch
         utils.train_one_epoch(train_loader, model, criterion, optimizer, epoch)
 
-        # evaluate on validation set
+        # evaluate on validation set after one epoch
         log_loss = utils.validate(val_loader, model, criterion)
 
         if log_loss < min_loss:
@@ -222,8 +215,9 @@ def weighted_ensamble(preds_list, test_whole_file, new_csv):
             all_idxs.append(labels)
             all_preds.append(pred.data.cpu())
 
-        all_preds = torch.cat(all_preds, dim=0).numpy()+1
-        all_idxs = torch.cat(all_idxs, dim=0).numpy().reshape(-1, 1)
+        all_preds = torch.cat(all_preds, dim=0).numpy().astype('int64')
+        all_idxs = torch.cat(all_idxs, dim=0).numpy(
+        ).reshape(-1, 1).astype('int64')
         res = np.concatenate((all_idxs, all_preds), axis=1)
 
         # complement the missing data
@@ -236,16 +230,17 @@ def weighted_ensamble(preds_list, test_whole_file, new_csv):
                 new_csv_writer.writerow(data)
 
             test_ids = f1.readlines()
-            print(len(test_ids))
             for idx in test_ids:
                 idx = int(idx.strip())
-                if idx not in idxs:
+                if idx not in all_idxs:
                     new_csv_writer.writerow(
-                        [idx, np.random.randint(low=1, high=129)])
+                        [idx, np.random.randint(low=1, high=num_classes+1)])
         f1.close()
 
 
 def avg_ensamble(preds_list, test_whole_file, new_csv):
+    """ average ensamble strategy
+    """
 
     for i, pred in enumerate(preds_list):
         arr = np.load(pred)
@@ -269,12 +264,11 @@ def avg_ensamble(preds_list, test_whole_file, new_csv):
             new_csv_writer.writerow(data)
 
         test_ids = f1.readlines()
-        print(len(test_ids))
         for idx in test_ids:
             idx = int(idx.strip())
             if idx not in idxs:
                 new_csv_writer.writerow(
-                    [idx, np.random.randint(low=1, high=129)])
+                    [idx, np.random.randint(low=1, high=num_classes+1)])
         f1.close()
 
 

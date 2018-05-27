@@ -20,106 +20,66 @@ from models.inceptionv4 import inceptionv4
 NB_CLASSES = 128
 
 
-class Res152Finetune(nn.Module):
-    def __init__(self, num_classes, net_cls, net_kwards):
+class FinetuneModel(nn.Module):
+
+    def __init__(self, model_name, num_classes, net_cls, net_kwards):
         super().__init__()
+
         original_model = net_cls(**net_kwards)
-        self.features = nn.Sequential(*list(original_model.children())[:-1])
-        self.classifier = nn.Sequential(
-            nn.Linear(original_model.fc.in_features, num_classes))
+
+        if(model_name.startswith('res')):
+            self.features = nn.Sequential(
+                *list(original_model.children())[:-1])
+            self.classifier = nn.Sequential(
+                nn.Linear(original_model.fc.in_features, num_classes))
+
+        elif(model_name.startswith('dense')):
+            self.features = nn.Sequential(
+                *list(original_model.children())[:-1])
+            self.classifier = nn.Sequential(
+                nn.Linear(original_model.classifier.in_features, num_classes))
+        elif(model_name.startswith('dpn')):
+            self.net = original_model
+            self.net.classifier = nn.Conv2d(
+                self.net.classifier.in_channels, num_classes, kernel_size=1, bias=True)
+        elif(model_name.startswith('senet') or model_name.startswith('nasnet') or):
+            self.net = original_model
+            self.net.last_linear = nn.Linear(
+                self.net.last_linear.in_features, num_classes)
+        else:
+            raise Exception('no match model name!')
 
     def forward(self, x):
-        x = self.features(x)
-        x = x.view(x.size(0), -1)
-        x = self.classifier(x)
+        if(model_name.startswith('resnet')):
+            x = self.features(x)
+            x = x.view(x.size(0), -1)
+            x = self.classifier(x)
+
+        elif(model_name.startswith('dense')):
+            x = self.features(x)
+            x = torch.nn.functional.relu(x, inplace=True)
+            x = torch.nn.functional.avg_pool2d(
+                x, kernel_size=7).view(x.size(0), -1)
+            x = self.classifier(x)
+        else:
+            x = self.net(x)
+
         return x
-
-
-class Dense201Finetune(nn.Module):
-    def __init__(self, num_classes, net_cls, net_kwards):
-        super().__init__()
-        self.net = net_cls(**net_kwards)
-        self.net.classifier = nn.Linear(
-            self.net.classifier.in_features, num_classes)
-
-    def forward(self, x):
-        return self.net(x)
-
-
-class DenseFinetune(nn.Module):
-    def __init__(self, num_classes, net_cls, net_kwards):
-        super().__init__()
-        original_model = net_cls(**net_kwards)
-        self.features = nn.Sequential(*list(original_model.children())[:-1])
-        self.classifier = nn.Sequential(
-            nn.Linear(original_model.classifier.in_features, num_classes))
-
-    def forward(self, x):
-        x = self.features(x)
-        x = torch.nn.functional.relu(x, inplace=True)
-        x = torch.nn.functional.avg_pool2d(
-            f, kernel_size=7).view(x.size(0), -1)
-        x = self.classifier(x)
-        return x
-
-
-class DPNFinetune(nn.Module):
-    def __init__(self, num_classes, net_cls, net_kwards):
-        super().__init__()
-        self.net = net_cls(**net_kwards)
-        self.net.classifier = nn.Conv2d(
-            self.net.classifier.in_channels, num_classes, kernel_size=1, bias=True)
-
-    def forward(self, x):
-        return self.net(x)
-
-
-class SEFinetune(nn.Module):
-    def __init__(self, num_classes, net_cls, net_kwards):
-        super().__init__()
-        self.net = net_cls(**net_kwards)
-        self.net.last_linear = nn.Linear(
-            self.net.last_linear.in_features, num_classes)
-
-    def forward(self, x):
-        return self.net(x)
-
-
-class NasnetFinetune(nn.Module):
-    def __init__(self, num_classes, net_cls, net_kwards):
-        super().__init__()
-        self.net = net_cls(**net_kwards)
-        self.net.last_linear = nn.Linear(
-            self.net.last_linear.in_features, num_classes)
-
-    def forward(self, x):
-        return self.net(x)
-
-
-class FinetunePretrainedModels(nn.Module):
-    def __init__(self, num_classes, net_cls, net_kwards):
-        super().__init__()
-        self.net = net_cls(**net_kwards)
-        self.net.last_linear = nn.Linear(
-            self.net.last_linear.in_features, num_classes)
-
-    def forward(self, x):
-        return self.net(x)
 
 
 model_dict = {
 
-    'resnet152': partial(Res152Finetune, NB_CLASSES, M.resnet152),
-    'inceptionresnetv2': partial(FinetunePretrainedModels, NB_CLASSES, pretrainedmodels.inceptionresnetv2),
-    'dpn98': partial(DPNFinetune, NB_CLASSES, pretrainedmodels.dpn98),
-    'dpn131': partial(DPNFinetune, NB_CLASSES, pretrainedmodels.dpn131),
-    'nasnet': partial(NasnetFinetune, NB_CLASSES, pretrainedmodels.nasnetalarge),
-    'senet154': partial(SEFinetune, NB_CLASSES, pretrainedmodels.senet154),
-    'densenet201': partial(Dense201Finetune, NB_CLASSES, M.densenet201),
-    'densenet161': partial(DenseFinetune, NB_CLASSES, M.densenet161),
-    'densenet169': partial(DenseFinetune, NB_CLASSES, M.densenet169),
-    'inceptionv4': partial(FinetunePretrainedModels, NB_CLASSES, pretrainedmodels.inceptionv4),
-    'xception': partial(FinetunePretrainedModels, NB_CLASSES, pretrainedmodels.xception)
+    'resnet152': partial(FinetuneModel, 'resnet152', NB_CLASSES, M.resnet152),
+    'inceptionresnetv2': partial(FinetuneModel, 'inceptionresnetv2', NB_CLASSES, pretrainedmodels.inceptionresnetv2),
+    'dpn98': partial(FinetuneModel, 'dpn98', NB_CLASSES, pretrainedmodels.dpn98),
+    'dpn131': partial(FinetuneModel, 'dpn131', NB_CLASSES, pretrainedmodels.dpn131),
+    'nasnet': partial(FinetuneModel, 'nasnet', NB_CLASSES, pretrainedmodels.nasnetalarge),
+    'senet154': partial(FinetuneModel, 'senet154', NB_CLASSES, pretrainedmodels.senet154),
+    'densenet201': partial(FinetuneModel, 'densenet201', NB_CLASSES, M.densenet201),
+    'densenet161': partial(FinetuneModel, 'densenet161', NB_CLASSES, M.densenet161),
+    'densenet169': partial(FinetuneModel, 'densenet169', NB_CLASSES, M.densenet169),
+    'inceptionv4': partial(FinetuneModel, 'inceptionv4', NB_CLASSES, pretrainedmodels.inceptionv4),
+    'xception': partial(FinetuneModel,  'xception', NB_CLASSES, pretrainedmodels.xception)
 }
 
 net_kwards = [{'pretrained': 'imagenet'}, {'pretrained': None}]
@@ -157,21 +117,16 @@ def load_model_multiGPU(model, checkpoint_pth):
 
 class DY_Model(object):
 
-    def __init__(self, model_name, num_classes=NB_CLASSES, checkpoint_file='', KFolds=1, batch_size=64, input_size=224, add_size=32):
+    def __init__(self, model_name, num_classes=NB_CLASSES, checkpoint_file='', batch_size=64, input_size=224, add_size=32):
 
         self.num_classes = num_classes
         self.model = None
         self.model_name = model_name
         self.checkpoint_file = checkpoint_file
-        self.KFolds = KFolds
-        self.cv_mode = True
 
         self.input_size = input_size
         self.batch_size = batch_size
         self.add_size = add_size
-
-        if(KFolds == 1):
-            self.cv_mode = False
 
         print('[+] Model Infomation --->\n'
               '\t\tModel name: {0:s}\n'

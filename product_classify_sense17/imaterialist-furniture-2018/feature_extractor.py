@@ -34,54 +34,37 @@ parser.add_argument('--feature-file', default='', type=str,
                     help='feature file to save')
 
 
-class Resnet152fts(nn.Module):
-    def __init__(self, original_model):
-        super(Resnet152fts, self).__init__()
-        self.features = original_model.features
+class FeatureExtractor(nn.Module):
+    def __init__(self, model_name, original_model):
+        super().__init()
+        if(model_name.startswith('res')):
+            self.features = original_model.features
+        elif(model_name.startswith('inceptionres')):
+            self.features = original_model.net.features
+            self.pool = original_model.net.avgpool_1a
+        elif(model_name.startswith('dpn')):
+            self.features = original_model.net.features
+        elif(model_name.startswith('inceptionv4')):
+            self.features = original_model.net.features
+            self.avg_pool = original_model.net.avg_pool
+        else:
+            raise Exception('no match model name!')
 
     def forward(self, x):
         x = self.features(x)
-        return x.view(x.size(0), -1)
 
+        if(model_name.startswith('inceptionres')):
+            x = self.pool(x)
+        elif(model_name.startswith('inceptionv4')):
+            x = self.avg_pool(x)
 
-class InceptionResnetV2fts(nn.Module):
-    def __init__(self, original_model):
-        super().__init__()
-        self.features = original_model.net.features
-        self.pool = original_model.net.avgpool_1a
-
-    def forward(self, x):
-        x = self.features(x)
-        x = self.pool(x)
-        return x.view(x.size(0), -1)
-
-
-class DPN98fts(nn.Module):
-    def __init__(self, original_model):
-        super(DPN98fts, self).__init__()
-        self.features = original_model.net.features
-
-    def forward(self, x):
-        x = self.features(x)
-        return x.view(x.size(0), -1)
-
-
-class Inceptionv4fts(nn.Module):
-    def __init__(self, original_model):
-        super(InceptionAvgPool, self).__init__()
-        self.features = original_model.net.features
-        self.avg_pool = original_model.net.avg_pool
-
-    def forward(self, x):
-        x = self.features(x)
-        x = self.avg_pool(x)
-        return x
+        returnx.view(x.size(0), -1)
 
 
 feature_extractor_dict = {
-    'resnet152': Resnet152fts,
-    'inceptionresnetv2': InceptionResnetV2fts,
-    'dpn98': DPN98fts,
+    'resnet152': partial(FeatureExtractor, 'resnet152')
+    'inceptionresnetv2': partial(FeatureExtractor, 'inceptionresnetv2')
+    'dpn98': partial(FeatureExtractor, 'dpn98')
 }
 
 
@@ -95,12 +78,9 @@ def get_feature_extractor(model_name, checkpoint_file):
 def extract_features(feature_extractor, data_dir, data_csv, prediction_file_path):
 
     print('[+] Using Ten-Crop Extracting strategy')
-    input_size = args.input_size
-    batch_size = args.batch_size
-    add_size = args.add_size
 
     transform = utils.get_transforms(
-        mode='test', input_size=input_size, resize_size=input_size+add_size)
+        mode='test', input_size=args.input_size, resize_size=args.input_size+args.add_size)
 
     data_array = pd.read_csv(data_csv).values
     dataset = utils.DYDataSet(
@@ -110,7 +90,7 @@ def extract_features(feature_extractor, data_dir, data_csv, prediction_file_path
     )
     data_loader = torch.utils.data.DataLoader(
         dataset,
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         shuffle=False,
         num_workers=4,
         pin_memory=True)
@@ -122,11 +102,12 @@ def extract_features(feature_extractor, data_dir, data_csv, prediction_file_path
     all_fts = []
 
     with torch.no_grad():
-        print('extracting total %d images' % len(dataset))
 
+        print('extracting total %d images' % len(dataset))
         for i, (input, labels) in enumerate(data_loader):  # tensor type
+
             print('extracting batch: %d/%d' %
-                  (i, len(dataset)/batch_size))
+                  (i, len(dataset)/args.batch_size))
 
             bs, ncrops, c, h, w = input.size()
             input = input.view(-1, c, h, w).cuda()
@@ -164,7 +145,7 @@ def extract_features(feature_extractor, data_dir, data_csv, prediction_file_path
         res = np.concatenate((all_fts, all_labels), axis=1)
         print(f'[+] save npy shape: {res.shape}')
 
-        part = (int(len(dataset)/batch_size))/800+1
+        part = (int(len(dataset)/args.batch_size))/800+1
         fts_file_name = prediction_file_path+'.' + str(part)
         print('[+] writing fts file: %s, part %d ...' %
               (fts_file_name, part))

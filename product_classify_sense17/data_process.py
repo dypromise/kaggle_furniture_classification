@@ -1,4 +1,5 @@
-
+"""this py file contains metheds to make data list from data dir
+"""
 
 import os
 import shutil
