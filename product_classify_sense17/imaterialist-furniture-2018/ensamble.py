@@ -28,21 +28,31 @@ train_list = ['res152_val_pred.npy',
               'senet154_val_pred.npy'
               ]
 
-test_list = ['res152_pred.npy',
-             'incepresv2_pred.npy',
-             'inceptionv4_dp0.2_pred.npy',
-             'inceptionv4_l2reg0.01_pred.npy',
-             'inceptionv4_pred.npy',
-             'xception_pred.npy',
-             'xception_l2reg0.01_pred.npy',
-             'xception_dp0.2_l2reg0.01_pred.npy',
-             'dpn98_pred.npy',
-             'dpn131_pred.npy',
-             'nasnet_pred.npy',
-             'senet154_pred.npy'
-             ]
+test_list = [
 
-p_list = [os.path.join(data_root, 'npys', pred_name)
+    'dense161_ck6.npy..npy',     # 'inceptionResnetv2_ck2.npy..npy',
+    'resnext101_32x4d_ck1.npy..npy',
+    # 'inceptionv4_ck1.npy..npy',     # 'resnext101_64x4d_ck1.npy..npy',
+    'dense169_ck7.npy..npy',
+    'dpn107_ck1.npy..npy',     # 'inceptionv4_ck2.npy..npy',
+    'senet154_ck2.npy..npy',
+    'dpn131_ck1.npy..npy',
+    'inceptionv4_dp0.2_l2reg0.01_pred.npy',
+    'se_resnet152_ck1.npy..npy',
+    'dpn92_ck1.npy..npy',
+    'inceptionv4_dp0.2_pred.npy',
+    'se_resnext101_32x4d_ck1.npy..npy',     # 'dpn92_ck2.npy..npy',
+    'inceptionv4_l2reg0.01_pred.npy',     # 'xception_ck1.npy..npy',
+    'dpn98_ck1.npy..npy',
+    'nasnet_ck1.npy..npy',
+    'xception_dp0.2_l2reg0.01_pred.npy',     # 'dpn98_ck2.npy..npy',
+    'res152_ck5.npy..npy',
+    'xception_l2reg0.01_pred.npy',
+    # 'res152_ck7.npy..npy',     'xception_pred.npy'
+    'inceptionResnetv2_ck1.npy..npy',
+]
+
+p_list = [os.path.join('/mnt/lustre17/yangkunlin/fur_dy/fur_res', pred_name)
           for pred_name in test_list]
 
 
@@ -87,7 +97,7 @@ class WeightedEnsambleModel(nn.Module):
         return x
 
 
-def load_data(preds_list，mode='train'):
+def load_data(preds_list, mode='train'):
     """ load data from npys, each npy file contains predictions of one model
     Keyword Arguments:
         preds_list，mode {str} -- [description] (default: {'train'})
@@ -108,7 +118,7 @@ def load_data(preds_list，mode='train'):
         X_train, X_test, y_train, y_test = train_test_split(
             X, labels, test_size=0.2)
         return X_train, y_train, X_test, y_test
-    elif(mode == 'test')
+    elif(mode == 'test'):
         return X, labels
     else:
         raise Exception(
@@ -255,6 +265,7 @@ def avg_ensamble(preds_list, test_whole_file, new_csv):
     res = np.concatenate((idxs, labels), axis=1)
 
     # complement the missing data
+    print(f'writing avg ensamble submission csv file')
     f1 = open(test_whole_file, 'r')
     with open(new_csv, 'w') as f3:
         new_csv_writer = csv.writer(f3, delimiter=',')
@@ -269,14 +280,16 @@ def avg_ensamble(preds_list, test_whole_file, new_csv):
             if idx not in idxs:
                 new_csv_writer.writerow(
                     [idx, np.random.randint(low=1, high=num_classes+1)])
-        f1.close()
+    f1.close()
+    print('done')
 
 
 def main():
     # train_ensamble()
     # weighted_ensamble(preds_list=p_list,
                       # test_whole_file=test_whole_file, new_csv=final_preds_csv)
-    avg_ensamble(p_list, test_whole_file, final_preds_csv)
+    avg_ensamble(preds_list=p_list, test_whole_file=test_whole_file,
+                 new_csv=final_preds_csv)
 
 
 if __name__ == "__main__":

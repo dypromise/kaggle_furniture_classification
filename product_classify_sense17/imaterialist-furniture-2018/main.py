@@ -60,7 +60,7 @@ def main():
 
     elif(args.mode == 'test'):
         furniture_model.test_single_model(
-            args.checkpoint_file, val_dir, val_csv, prediction_file_path=args.test_predsfile, ten_crop=True, prob=args.test_prob)
+            args.checkpoint_file, test_dir, test_csv, prediction_file_path=args.test_predsfile, ten_crop=True, prob=args.test_prob)
 
         # print("complement prediction...")
         # utils.complement_prediction(

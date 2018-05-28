@@ -7,6 +7,7 @@ import csv
 from imp import reload
 import pandas as pd
 from PIL import Image
+import numpy as np
 
 data_root = '/mnt/lustre17/yangkunlin/fur_dy/data'
 
@@ -78,3 +79,21 @@ def print_size():
         img_name = os.path.join(data_root, 'val', img)
         image = Image.open(img_name).convert('RGB')
         print(image.size)
+
+
+def tmp_process():
+    name_list = []
+    f = '/mnt/lustre17/yangkunlin/fur_dy/fur_res/xception_pred.npy'
+    arr = np.load(f)
+    idxs = arr[:, 0]
+    for file_name in os.listdir('/mnt/lustre17/yangkunlin/fur_dy/fur_res'):
+        name = file_name[:-5]
+        if(name.endswith('ck')):
+            name_list.append(file_name)
+
+    for file_name in name_list:
+        file = os.path.join(
+            '/mnt/lustre17/yangkunlin/fur_dy/fur_res', file_name)
+        a = np.load(file)
+        a = np.insert(a, 0, values=idxs, axis=1)
+        np.save(file+'.', a)

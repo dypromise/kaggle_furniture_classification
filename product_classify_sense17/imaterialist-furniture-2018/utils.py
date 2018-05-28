@@ -1,12 +1,12 @@
-import json
-from pathlib import Path
 import os
 import time
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
+from pathlib import Path
 import csv
-
+import json
+from PIL import Image
 
 import torch
 import torch.nn as nn
@@ -20,14 +20,10 @@ import torchvision.datasets as datasets
 from torch.utils.data import Dataset
 from torch.autograd import Variable
 
-from PIL import Image
-import torch
-from torchvision import transforms
-
 
 normalize = transforms.Normalize(
-    mean=[0.5, 0.5, 0.5],
-    std=[0.5, 0.5, 0.5]
+    mean=[0.485, 0.456, 0.406],
+    std=[0.229, 0.224, 0.225],
 )
 
 last_layer_names = ['net.last_linear.weight', 'net.last_linear.bias',
