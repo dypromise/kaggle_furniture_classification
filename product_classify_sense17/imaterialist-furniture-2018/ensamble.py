@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 from sklearn.cross_validation import train_test_split
-import torch.nn.functional as f
+
 
 import utils
 
@@ -28,31 +28,54 @@ train_list = ['res152_val_pred.npy',
               'senet154_val_pred.npy'
               ]
 
-test_list = [
+# test_list = [
 
-    'dense161_ck6.npy..npy',     # 'inceptionResnetv2_ck2.npy..npy',
-    'resnext101_32x4d_ck1.npy..npy',
-    # 'inceptionv4_ck1.npy..npy',     # 'resnext101_64x4d_ck1.npy..npy',
-    'dense169_ck7.npy..npy',
-    'dpn107_ck1.npy..npy',     # 'inceptionv4_ck2.npy..npy',
-    'senet154_ck2.npy..npy',
-    'dpn131_ck1.npy..npy',
-    'inceptionv4_dp0.2_l2reg0.01_pred.npy',
-    'se_resnet152_ck1.npy..npy',
-    'dpn92_ck1.npy..npy',
-    'inceptionv4_dp0.2_pred.npy',
-    'se_resnext101_32x4d_ck1.npy..npy',     # 'dpn92_ck2.npy..npy',
-    'inceptionv4_l2reg0.01_pred.npy',     # 'xception_ck1.npy..npy',
-    'dpn98_ck1.npy..npy',
-    'nasnet_ck1.npy..npy',
-    'xception_dp0.2_l2reg0.01_pred.npy',     # 'dpn98_ck2.npy..npy',
-    'res152_ck5.npy..npy',
-    'xception_l2reg0.01_pred.npy',
-    # 'res152_ck7.npy..npy',     'xception_pred.npy'
-    'inceptionResnetv2_ck1.npy..npy',
+#     'dense161_ck6.npy..npy',     # 'inceptionResnetv2_ck2.npy..npy',
+#     'resnext101_32x4d_ck1.npy..npy',
+#     # 'inceptionv4_ck1.npy..npy',     # 'resnext101_64x4d_ck1.npy..npy',
+#     'dense169_ck7.npy..npy',
+#     'dpn107_ck1.npy..npy',     # 'inceptionv4_ck2.npy..npy',
+#     'senet154_ck2.npy..npy',
+#     'dpn131_ck1.npy..npy',
+
+
+#     'inceptionv4_dp0.2_l2reg0.01_pred.npy',
+#     'se_resnet152_ck1.npy..npy',
+#     'dpn92_ck1.npy..npy',
+#     'inceptionv4_dp0.2_pred.npy',
+#     'se_resnext101_32x4d_ck1.npy..npy',     # 'dpn92_ck2.npy..npy',
+#     'inceptionv4_l2reg0.01_pred.npy',     # 'xception_ck1.npy..npy',
+#     'dpn98_ck1.npy..npy',
+#     'nasnet_ck1.npy..npy',
+#     'xception_dp0.2_l2reg0.01_pred.npy',     # 'dpn98_ck2.npy..npy',
+#     'res152_ck5.npy..npy',
+#     'xception_l2reg0.01_pred.npy',
+#     # 'res152_ck7.npy..npy',     'xception_pred.npy'
+#     'inceptionResnetv2_ck1.npy..npy',
+# ]
+
+test_list = [
+    'dpn107_ck2.npy..npy',
+    'dpn92_ck5.npy..npy',
+    'resnet152_ck8.npy..npy',
+    'se_resnet152_ck2.npy..npy',
+    'dpn107_ck4.npy..npy',
+    'dpn98_ck3.npy..npy',
+    'resnext101_32x4d_ck2.npy..npy',
+    'se_resnet152_ck4.npy..npy',
+    'dpn131_ck2.npy..npy',
+    'inceptionresnetv2_ck3.npy..npy',
+    'resnext101_32x4d_ck4.npy..npy',
+    'xception_ck2.npy..npy',
+    'dpn131_ck5.npy..npy',
+    'inceptionv4_ck3.npy..npy',
+    'resnext101_64x4d_ck2.npy..npy',
+    'dpn92_ck3.npy..npy',
+    'resnet152_ck10.npy..npy',
+    'senet154_ck3.npy..npy'
 ]
 
-p_list = [os.path.join('/mnt/lustre17/yangkunlin/fur_dy/fur_res', pred_name)
+p_list = [os.path.join('/mnt/lustre17/yangkunlin/fur_dy/fur_pse2', pred_name)
           for pred_name in test_list]
 
 
@@ -93,7 +116,7 @@ class WeightedEnsambleModel(nn.Module):
 
     def forward(self, x):
         x = torch.matmul(
-            x*self.normalize(self.weights, dim=1), self.ones).squeeze(-1)
+            x * self.normalize(self.weights, dim=1), self.ones).squeeze(-1)
         return x
 
 
@@ -102,7 +125,8 @@ def load_data(preds_list, mode='train'):
     Keyword Arguments:
         preds_list，mode {str} -- [description] (default: {'train'})
     Returns:
-        [turple] -- if mode is `train`, return train_test_split data parts; if mode is `test`, return all data
+        [turple] -- if mode is `train`, return train_test_split data parts;if mode is `test`,
+        return all data
     """
 
     X = []
@@ -129,7 +153,7 @@ def train_ensamble():
     """ train func of weighted ensamble
     """
 
-    X_train, y_train, X_test, y_test = load_train_data(
+    X_train, y_train, X_test, y_test = load_data(
         preds_list=p_list, mode='train')
     train_dataset = MyDataset(X_train, y_train)
     train_loader = torch.utils.data.DataLoader(
@@ -178,7 +202,8 @@ def train_ensamble():
 
         if log_loss < min_loss:
             torch.save(model.state_dict(), best_checkpoint_file)
-            print(f'[+] lr = {lr}, val loss improved from {min_loss:.5f} to {log_loss:.5f}. Saved!')
+            print(
+                f'[+] lr = {lr}, val loss improved from {min_loss:.5f} to {log_loss:.5f}. Saved!')
             min_loss = log_loss
             patience = 0
         else:
@@ -195,7 +220,7 @@ def weighted_ensamble(preds_list, test_whole_file, new_csv):
         new_csv {[str]} --  final submittion csv file
     """
 
-    X, idxs = load_test_data(preds_list, mode='test')
+    X, idxs = load_data(preds_list, mode='test')
     test_dataset = MyDataset(X, idxs)
     test_loader = torch.utils.data.DataLoader(
         test_dataset,
@@ -216,7 +241,7 @@ def weighted_ensamble(preds_list, test_whole_file, new_csv):
         for i, (input, labels) in enumerate(test_loader):  # tensor type
 
             print('testting batch: %d/%d' %
-                  (i, len(test_dataset)/batch_size))
+                  (i, len(test_dataset) / batch_size))
 
             input = input.cuda().float()
             output = model(input)
@@ -244,7 +269,7 @@ def weighted_ensamble(preds_list, test_whole_file, new_csv):
                 idx = int(idx.strip())
                 if idx not in all_idxs:
                     new_csv_writer.writerow(
-                        [idx, np.random.randint(low=1, high=num_classes+1)])
+                        [idx, np.random.randint(low=1, high=num_classes + 1)])
         f1.close()
 
 
@@ -258,10 +283,11 @@ def avg_ensamble(preds_list, test_whole_file, new_csv):
             idxs = np.array(arr[:, 0], dtype='int32').reshape((-1, 1))
             res = np.array(arr[:, 1:], dtype='float32')
         else:
+
             res += arr[:, 1:]
 
-    res /= (i+1)
-    labels = (np.argmax(res, axis=1)+1).reshape((-1, 1))
+    res /= (i + 1)
+    labels = (np.argmax(res, axis=1) + 1).reshape((-1, 1))
     res = np.concatenate((idxs, labels), axis=1)
 
     # complement the missing data
@@ -279,7 +305,7 @@ def avg_ensamble(preds_list, test_whole_file, new_csv):
             idx = int(idx.strip())
             if idx not in idxs:
                 new_csv_writer.writerow(
-                    [idx, np.random.randint(low=1, high=num_classes+1)])
+                    [idx, np.random.randint(low=1, high=num_classes + 1)])
     f1.close()
     print('done')
 
@@ -287,7 +313,7 @@ def avg_ensamble(preds_list, test_whole_file, new_csv):
 def main():
     # train_ensamble()
     # weighted_ensamble(preds_list=p_list,
-                      # test_whole_file=test_whole_file, new_csv=final_preds_csv)
+    # test_whole_file=test_whole_file, new_csv=final_preds_csv)
     avg_ensamble(preds_list=p_list, test_whole_file=test_whole_file,
                  new_csv=final_preds_csv)
 

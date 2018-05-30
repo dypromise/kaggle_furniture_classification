@@ -1,9 +1,7 @@
 import numpy as np
-from sklearn.datasets import load_digits
 import time
 from sklearn import metrics
 import pickle as pickle
-import pandas as pd
 
 
 # Logistic Regression Classifier
@@ -82,8 +80,8 @@ def read_data(preds_list):
         else:
             res += arr[:, 1:]
 
-    res /= (i+1)
-    labels = (np.argmax(res, axis=1)+1).reshape((-1, 1))
+    res /= (i + 1)
+    labels = (np.argmax(res, axis=1) + 1).reshape((-1, 1))
 
     res = np.concatenate((idxs, labels), axis=1)
 

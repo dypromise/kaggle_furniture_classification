@@ -1,6 +1,5 @@
 import argparse
 import os
-import utils
 import fur_model
 
 model_names = sorted(name for name in fur_model.model_dict.keys())
@@ -8,8 +7,8 @@ parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 
 parser.add_argument('data', metavar='DIR',
                     help='path to dataset')
-parser.add_argument('--checkpoint-file', default='/home/dingyang/best_val_weights.pth', type=str,
-                    help='checkpoint file path (default: /home/dingyang/best_val_weights.pth)')
+parser.add_argument('--checkpoint-file', default='/home/dingyang/best_val_weights.pth',
+                    type=str, help='checkpoint file path ')
 parser.add_argument('--model-name', '-a', metavar='ARCH', default='resnet18',
                     choices=model_names,
                     help='model architecture: ' +
@@ -47,7 +46,8 @@ def main():
     test_whole_file = os.path.join(args.data, 'whole_test.txt')
     whole_prediction_csv = os.path.join(args.data, 'new_test_predictions.csv')
 
-    furniture_model = fur_model.DY_Model(model_name=args.model_name, num_classes=fur_model.NB_CLASSES,
+    furniture_model = fur_model.DY_Model(model_name=args.model_name,
+                                         num_classes=fur_model.NB_CLASSES,
                                          checkpoint_file=args.checkpoint_file,
                                          batch_size=args.batch_size,
                                          input_size=args.input_size,
@@ -60,7 +60,9 @@ def main():
 
     elif(args.mode == 'test'):
         furniture_model.test_single_model(
-            args.checkpoint_file, test_dir, test_csv, prediction_file_path=args.test_predsfile, ten_crop=True, prob=args.test_prob)
+            args.checkpoint_file, test_dir, test_csv,
+            prediction_file_path=args.test_predsfile, ten_crop=True,
+            prob=args.test_prob)
 
         # print("complement prediction...")
         # utils.complement_prediction(

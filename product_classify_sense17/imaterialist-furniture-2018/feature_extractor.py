@@ -9,7 +9,6 @@ from functools import partial
 
 import torch
 import torch.nn as nn
-from torchvision import models
 
 
 model_names = sorted(name for name in fur_model.model_dict.keys())
@@ -37,6 +36,7 @@ parser.add_argument('--feature-file', default='', type=str,
 class FeatureExtractor(nn.Module):
     def __init__(self, model_name, original_model):
         super().__init()
+        self.model_name = model_name
         if(model_name.startswith('res')):
             self.features = original_model.features
         elif(model_name.startswith('inceptionres')):
@@ -53,17 +53,18 @@ class FeatureExtractor(nn.Module):
     def forward(self, x):
         x = self.features(x)
 
-        if(model_name.startswith('inceptionres')):
+        if(self.model_name.startswith('inceptionres')):
             x = self.pool(x)
-        elif(model_name.startswith('inceptionv4')):
+        elif(self.model_name.startswith('inceptionv4')):
+
             x = self.avg_pool(x)
 
         return x.view(x.size(0), -1)
 
 
 feature_extractor_dict = {
-    'resnet152': partial(FeatureExtractor, 'resnet152')
-    'inceptionresnetv2': partial(FeatureExtractor, 'inceptionresnetv2')
+    'resnet152': partial(FeatureExtractor, 'resnet152'),
+    'inceptionresnetv2': partial(FeatureExtractor, 'inceptionresnetv2'),
     'dpn98': partial(FeatureExtractor, 'dpn98')
 }
 
@@ -80,7 +81,7 @@ def extract_features(feature_extractor, data_dir, data_csv, prediction_file_path
     print('[+] Using Ten-Crop Extracting strategy')
 
     transform = utils.get_transforms(
-        mode='test', input_size=args.input_size, resize_size=args.input_size+args.add_size)
+        mode='test', input_size=args.input_size, resize_size=args.input_size + args.add_size)
 
     data_array = pd.read_csv(data_csv).values
     dataset = utils.DYDataSet(
@@ -107,7 +108,7 @@ def extract_features(feature_extractor, data_dir, data_csv, prediction_file_path
         for i, (input, labels) in enumerate(data_loader):  # tensor type
 
             print('extracting batch: %d/%d' %
-                  (i, len(dataset)/args.batch_size))
+                  (i, len(dataset) / args.batch_size))
 
             bs, ncrops, c, h, w = input.size()
             input = input.view(-1, c, h, w).cuda()
@@ -117,7 +118,7 @@ def extract_features(feature_extractor, data_dir, data_csv, prediction_file_path
             all_labels.append(labels)
             all_fts.append(output.data.cpu())
 
-            if((i+1) % 800 == 0):
+            if((i + 1) % 800 == 0):
                 all_labels = torch.cat(
                     all_labels, dim=0).numpy().reshape(-1, 1)
                 all_fts = torch.cat(all_fts, dim=0).numpy()
@@ -127,8 +128,8 @@ def extract_features(feature_extractor, data_dir, data_csv, prediction_file_path
                 res = np.concatenate((all_fts, all_labels), axis=1)
                 print(f'[+] save npy shape: {res.shape}')
 
-                part = (i+1)/800
-                fts_file_name = prediction_file_path+'.' + str(part)
+                part = (i + 1) / 800
+                fts_file_name = prediction_file_path + '.' + str(part)
                 print('[+] writing fts file: %s, part %d ...' %
                       (fts_file_name, part))
                 np.save(fts_file_name, res)
@@ -145,8 +146,8 @@ def extract_features(feature_extractor, data_dir, data_csv, prediction_file_path
         res = np.concatenate((all_fts, all_labels), axis=1)
         print(f'[+] save npy shape: {res.shape}')
 
-        part = (int(len(dataset)/args.batch_size))/800+1
-        fts_file_name = prediction_file_path+'.' + str(part)
+        part = (int(len(dataset) / args.batch_size)) / 800 + 1
+        fts_file_name = prediction_file_path + '.' + str(part)
         print('[+] writing fts file: %s, part %d ...' %
               (fts_file_name, part))
         np.save(fts_file_name, res)

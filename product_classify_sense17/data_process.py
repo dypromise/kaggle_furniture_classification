@@ -4,8 +4,6 @@
 import os
 import shutil
 import csv
-from imp import reload
-import pandas as pd
 from PIL import Image
 import numpy as np
 
@@ -24,8 +22,8 @@ val_list = os.path.join(data_root, 'val_list.txt')
 
 def func1():
     for i in range(128):
-        tmp_dir_val = os.path.join(val_dir, '%d' % (i+1))
-        dest_dir = os.path.join(train_dir, '%d' % (i+1))
+        tmp_dir_val = os.path.join(val_dir, '%d' % (i + 1))
+        dest_dir = os.path.join(train_dir, '%d' % (i + 1))
         for item in os.listdir(tmp_dir_val):
             src_path = os.path.join(tmp_dir_val, item)
             des_path = os.path.join(dest_dir, item)
@@ -38,19 +36,19 @@ def func2():
         writer = csv.writer(f)
         writer.writerow(['img', 'label'])
         for i in range(128):
-            train_sub_dir = os.path.join(train_dir, '%d' % (i+1))
+            train_sub_dir = os.path.join(train_dir, '%d' % (i + 1))
             for item in os.listdir(train_sub_dir):
                 # labels begin from 0! matching Pytorch!
-                data = ['%d' % (i+1)+'/'+item, '%d' % (i)]
+                data = ['%d' % (i + 1) + '/' + item, '%d' % (i)]
                 writer.writerow(data)
 
     with open(val_csv, 'w') as f:
         writer = csv.writer(f)
         writer.writerow(['img', 'label'])
         for i in range(128):
-            train_sub_dir = os.path.join(val_dir, '%d' % (i+1))
+            train_sub_dir = os.path.join(val_dir, '%d' % (i + 1))
             for item in os.listdir(train_sub_dir):
-                data = ['%d' % (i+1)+'/'+item, '%d' % (i)]
+                data = ['%d' % (i + 1) + '/' + item, '%d' % (i)]
                 writer.writerow(data)
 
     # with open(val_csv, 'w') as f:
@@ -86,14 +84,16 @@ def tmp_process():
     f = '/mnt/lustre17/yangkunlin/fur_dy/fur_res/xception_pred.npy'
     arr = np.load(f)
     idxs = arr[:, 0]
-    for file_name in os.listdir('/mnt/lustre17/yangkunlin/fur_dy/fur_res'):
-        name = file_name[:-5]
+    for file_name in os.listdir('/mnt/lustre17/yangkunlin/fur_dy/fur_pse2'):
+        name = file_name[:-6]
         if(name.endswith('ck')):
             name_list.append(file_name)
 
     for file_name in name_list:
         file = os.path.join(
-            '/mnt/lustre17/yangkunlin/fur_dy/fur_res', file_name)
+            '/mnt/lustre17/yangkunlin/fur_dy/fur_pse2', file_name)
         a = np.load(file)
+        print(a.shape)
         a = np.insert(a, 0, values=idxs, axis=1)
-        np.save(file+'.', a)
+        print(a.shape)
+        np.save(file + '.', a)

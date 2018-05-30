@@ -1,24 +1,15 @@
 import os
 import time
 import pandas as pd
-import numpy as np
-from tqdm import tqdm
-from pathlib import Path
 import csv
-import json
 from PIL import Image
 
 import torch
-import torch.nn as nn
 import torch.nn.parallel
-import torch.backends.cudnn as cudnn
-import torch.distributed as dist
 import torch.optim
 import torch.utils.data
 import torchvision.transforms as transforms
-import torchvision.datasets as datasets
 from torch.utils.data import Dataset
-from torch.autograd import Variable
 
 
 normalize = transforms.Normalize(
@@ -133,7 +124,7 @@ def get_l2_regularization(variable_list):
 
 
 def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30):
-     # training loop
+    # training loop
     min_loss = float("inf")
     lr = 0
     patience = 0
@@ -159,7 +150,7 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30
             print(f'[+] set lr={lr}')
             cnt = 0
             for name, param in model.named_parameters():
-                if(not name in last_layer_names):  # resnet
+                if(name not in last_layer_names):  # resnet
                     param.requires_grad = False
                 else:
                     cnt += 1

@@ -1,19 +1,13 @@
 
-import os
-import sys
-import csv
-import re
 
 from functools import partial
 
 import torch
 import torch.nn as nn
-import torchvision.transforms as transforms
 import torchvision.models as M
 
 import numpy as np
 import pandas as pd
-from sklearn.cross_validation import KFold
 import pretrainedmodels
 
 import utils
@@ -83,9 +77,9 @@ model_dict = {
     'densenet161': partial(FinetuneModel, 'densenet161', NB_CLASSES, pretrainedmodels.densenet161),
     'densenet169': partial(FinetuneModel, 'densenet169', NB_CLASSES, pretrainedmodels.densenet169),
     'densenet201': partial(FinetuneModel, 'densenet201', NB_CLASSES, pretrainedmodels.densenet201),
-    'xception': partial(FinetuneModel,  'xception', NB_CLASSES, pretrainedmodels.xception),
-    'resnext101_32x4d': partial(FinetuneModel,  'resnext101_32x4d', NB_CLASSES, pretrainedmodels.resnext101_32x4d),
-    'resnext101_64x4d': partial(FinetuneModel,  'resnext101_64x4d', NB_CLASSES, pretrainedmodels.resnext101_64x4d),
+    'xception': partial(FinetuneModel, 'xception', NB_CLASSES, pretrainedmodels.xception),
+    'resnext101_32x4d': partial(FinetuneModel, 'resnext101_32x4d', NB_CLASSES, pretrainedmodels.resnext101_32x4d),
+    'resnext101_64x4d': partial(FinetuneModel, 'resnext101_64x4d', NB_CLASSES, pretrainedmodels.resnext101_64x4d),
     'se_resnet152': partial(FinetuneModel, 'se_resnet152', NB_CLASSES, pretrainedmodels.se_resnet152),
     'se_resnext101_32x4d': partial(FinetuneModel, 'se_resnext101_32x4d', NB_CLASSES, pretrainedmodels.se_resnext101_32x4d),
 
@@ -154,7 +148,7 @@ class DY_Model(object):
             train_dir,
             train_part,
             utils.get_transforms(
-                mode='train', input_size=self.input_size, resize_size=self.input_size+42)
+                mode='train', input_size=self.input_size, resize_size=self.input_size + self.add_size)
         )
         train_loader = torch.utils.data.DataLoader(
             train_dataset,
@@ -166,7 +160,7 @@ class DY_Model(object):
         val_dataset = utils.DYDataSet(
             val_dir,
             val_part,
-            utils.get_transforms(mode='valid', input_size=self.input_size, resize_size=self.input_size+42))
+            utils.get_transforms(mode='valid', input_size=self.input_size, resize_size=self.input_size + self.add_size))
         val_loader = torch.utils.data.DataLoader(
             val_dataset,
             batch_size=self.batch_size,
@@ -185,12 +179,12 @@ class DY_Model(object):
 
         print('[+] checkpoint file:{0:s}'.format(checkpoint_file))
         transform = utils.get_transforms(
-            mode='valid', input_size=self.input_size, resize_size=self.input_size+self.add_size)
+            mode='valid', input_size=self.input_size, resize_size=self.input_size + self.add_size)
 
         if(ten_crop):
             print('[+] Using Ten-Crop Testting strategy')
             transform = utils.get_transforms(
-                mode='test', input_size=self.input_size, resize_size=self.input_size+self.add_size)
+                mode='test', input_size=self.input_size, resize_size=self.input_size + self.add_size)
 
         # get the data part of pd.DataFrame object
         test_array = pd.read_csv(test_csv).values
@@ -219,7 +213,7 @@ class DY_Model(object):
             print('testting total %d images' % len(test_dataset))
             for i, (input, labels) in enumerate(test_loader):  # tensor type
                 print('testting batch: %d/%d' %
-                      (i, len(test_dataset)/self.batch_size))
+                      (i, len(test_dataset) / self.batch_size))
 
                 input = input.cuda()
 
