@@ -18,7 +18,8 @@ normalize = transforms.Normalize(
 )
 
 last_layer_names = ['net.last_linear.weight', 'net.last_linear.bias',
-                    'net.classifier.weight', 'net.classifier.bias']
+                    'net.classifier.weight', 'net.classifier.bias',
+                    'net.fc.weight', 'net.fc.bias']
 
 l2_reg_param_names = ['module.net.last_linear.weight', 'module.net.last_linear.bias',
                       'module.net.classifier.weight', 'module.net.classifier.bias']
@@ -47,7 +48,8 @@ def get_transforms(mode='train', input_size=224, resize_size=256):
             transforms.Resize(resize_size),
             transforms.TenCrop(input_size),
             transforms.Lambda(lambda crops: torch.stack(
-                [normalize(transforms.ToTensor()(crop)) for crop in crops])),  # .ToTensor() is a class NOT a function!
+                [normalize(transforms.ToTensor()(crop)) for crop in crops])),
+            # .ToTensor() is a class NOT a function!
         ])
 
 
@@ -131,7 +133,7 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30
     for epoch in range(epochs):
         print(f'[+] epoch {epoch}')
         if epoch == 1:
-            lr = 0.0001
+            lr = 0.00003
             print(f'[+] set lr={lr}')
             cnt = 0
             for param in model.parameters():
@@ -142,7 +144,7 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30
         if patience == 2:
             patience = 0
             model.load_state_dict(torch.load(checkpoint_file))
-            lr = lr / 3
+            lr = lr / 10
             print(f'[+] set lr={lr}')
 
         if epoch == 0:
@@ -161,7 +163,7 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30
                 filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
         else:
             optimizer = torch.optim.Adam(
-                filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=0.0002)
+                filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=0.0001)
 
         # train for one epoch
         train_one_epoch(train_loader, model, criterion, optimizer, epoch)

@@ -15,6 +15,19 @@ import utils
 
 NB_CLASSES = 128
 
+weights = torch.tensor(np.array([
+    1.5, 1.5, 1.5, 3., 1., 1., 1.5, 1.5, 3., 1., 1., 1.,
+    1., 1., 10., 1., 1.5, 1., 6., 1., 1.5, 3., 3., 1.,
+    3., 1., 3., 1., 3., 3., 1.5, 1., 1., 1.5, 3., 1.,
+    1., 1., 3., 1., 1., 1., 1., 1., 1.5, 1., 3., 1.5,
+    3., 3., 3., 1.5, 1.5, 3., 1., 1., 3., 1.5, 1.5, 1.,
+    1., 1.5, 10., 1., 1.5, 6., 3., 1., 1., 3., 1., 1.5,
+    1., 3., 1., 1., 1., 1., 1., 1., 1., 1.5, 3., 1.,
+    1., 3., 1.5, 3., 1., 1.5, 1., 1., 1.5, 1., 1., 3.,
+    3., 1., 1., 1.5, 1., 1., 1.5, 1., 3., 3., 1.5, 1.5,
+    1.5, 3., 1., 3., 1.5, 3., 3., 1., 1., 1., 1., 1.5,
+    3., 1., 1., 3., 1.5, 1., 3., 1.5])).float()
+
 
 class FinetuneModel(nn.Module):
 
@@ -25,10 +38,9 @@ class FinetuneModel(nn.Module):
         original_model = net_cls(**net_kwards)
 
         if(model_name.startswith('resnet')):
-            self.features = nn.Sequential(
-                *list(original_model.children())[:-1])
-            self.classifier = nn.Sequential(
-                nn.Linear(original_model.fc.in_features, num_classes))
+            self.net = original_model
+            self.net.classifier = nn.Linear(
+                self.net.fc.in_features, num_classes)
 
         elif(model_name.startswith('dpn')):
             self.net = original_model
@@ -52,36 +64,55 @@ class FinetuneModel(nn.Module):
             raise Exception('no match pretrainedmodel!')
 
     def forward(self, x):
-        if(self.model_name.startswith('resnet')):
-            x = self.features(x)
-            x = x.view(x.size(0), -1)
-            x = self.classifier(x)
-
-        else:
-            x = self.net(x)
-
+        x = self.net(x)
         return x
 
 
 model_dict = {
 
-    'resnet152': partial(FinetuneModel, 'resnet152', NB_CLASSES, M.resnet152),
-    'inceptionv4': partial(FinetuneModel, 'inceptionv4', NB_CLASSES, pretrainedmodels.inceptionv4),
-    'inceptionresnetv2': partial(FinetuneModel, 'inceptionresnetv2', NB_CLASSES, pretrainedmodels.inceptionresnetv2),
+    'resnet152': partial(FinetuneModel, 'resnet152', NB_CLASSES, pretrainedmodels.resnet152),
+
+    'inceptionv4': partial(FinetuneModel, 'inceptionv4', NB_CLASSES,
+                           pretrainedmodels.inceptionv4),
+
+    'inceptionresnetv2': partial(FinetuneModel, 'inceptionresnetv2', NB_CLASSES,
+                                 pretrainedmodels.inceptionresnetv2),
+
     'dpn92': partial(FinetuneModel, 'dpn92', NB_CLASSES, pretrainedmodels.dpn92),
+
     'dpn98': partial(FinetuneModel, 'dpn98', NB_CLASSES, pretrainedmodels.dpn98),
+
     'dpn107': partial(FinetuneModel, 'dpn107', NB_CLASSES, pretrainedmodels.dpn107),
+
     'dpn131': partial(FinetuneModel, 'dpn131', NB_CLASSES, pretrainedmodels.dpn131),
-    'nasnet': partial(FinetuneModel, 'nasnet', NB_CLASSES, pretrainedmodels.nasnetalarge),
+
+    'nasnet': partial(FinetuneModel, 'nasnet', NB_CLASSES,
+                      pretrainedmodels.nasnetalarge),
+
     'senet154': partial(FinetuneModel, 'senet154', NB_CLASSES, pretrainedmodels.senet154),
-    'densenet161': partial(FinetuneModel, 'densenet161', NB_CLASSES, pretrainedmodels.densenet161),
-    'densenet169': partial(FinetuneModel, 'densenet169', NB_CLASSES, pretrainedmodels.densenet169),
-    'densenet201': partial(FinetuneModel, 'densenet201', NB_CLASSES, pretrainedmodels.densenet201),
+
+    'densenet161': partial(FinetuneModel, 'densenet161', NB_CLASSES,
+                           pretrainedmodels.densenet161),
+
+    'densenet169': partial(FinetuneModel, 'densenet169', NB_CLASSES,
+                           pretrainedmodels.densenet169),
+
+    'densenet201': partial(FinetuneModel, 'densenet201', NB_CLASSES,
+                           pretrainedmodels.densenet201),
+
     'xception': partial(FinetuneModel, 'xception', NB_CLASSES, pretrainedmodels.xception),
-    'resnext101_32x4d': partial(FinetuneModel, 'resnext101_32x4d', NB_CLASSES, pretrainedmodels.resnext101_32x4d),
-    'resnext101_64x4d': partial(FinetuneModel, 'resnext101_64x4d', NB_CLASSES, pretrainedmodels.resnext101_64x4d),
-    'se_resnet152': partial(FinetuneModel, 'se_resnet152', NB_CLASSES, pretrainedmodels.se_resnet152),
-    'se_resnext101_32x4d': partial(FinetuneModel, 'se_resnext101_32x4d', NB_CLASSES, pretrainedmodels.se_resnext101_32x4d),
+
+    'resnext101_32x4d': partial(FinetuneModel, 'resnext101_32x4d', NB_CLASSES,
+                                pretrainedmodels.resnext101_32x4d),
+
+    'resnext101_64x4d': partial(FinetuneModel, 'resnext101_64x4d', NB_CLASSES,
+                                pretrainedmodels.resnext101_64x4d),
+
+    'se_resnet152': partial(FinetuneModel, 'se_resnet152', NB_CLASSES,
+                            pretrainedmodels.se_resnet152),
+
+    'se_resnext101_32x4d': partial(FinetuneModel, 'se_resnext101_32x4d', NB_CLASSES,
+                                   pretrainedmodels.se_resnext101_32x4d),
 
 }
 
@@ -121,7 +152,8 @@ def load_model_multiGPU(model, checkpoint_pth):
 
 class DY_Model(object):
 
-    def __init__(self, model_name, num_classes=NB_CLASSES, checkpoint_file='', batch_size=64, input_size=224, add_size=32):
+    def __init__(self, model_name, num_classes=NB_CLASSES, checkpoint_file='',
+                 batch_size=64, input_size=224, add_size=32):
 
         self.num_classes = num_classes
         self.model = None
@@ -137,7 +169,9 @@ class DY_Model(object):
               '\t\tBatch size: {1:d}\n'
               '\t\tCheckpoint file: {2:s}\n'
               '\t\tInput size: {3:d}\n'
-              '\t\tData augmentation: {4:s}'.format(self.model_name, self.batch_size, self.checkpoint_file, self.input_size, str(True)))
+              '\t\tData augmentation: {4:s}'.format(self.model_name, self.batch_size,
+                                                    self.checkpoint_file,
+                                                    self.input_size, str(True)))
 
     def train_single_model(self, train_dir, train_csv, val_dir, val_csv, epochs):
 
@@ -148,7 +182,8 @@ class DY_Model(object):
             train_dir,
             train_part,
             utils.get_transforms(
-                mode='train', input_size=self.input_size, resize_size=self.input_size + self.add_size)
+                mode='train', input_size=self.input_size,
+                resize_size=self.input_size + self.add_size)
         )
         train_loader = torch.utils.data.DataLoader(
             train_dataset,
@@ -160,7 +195,8 @@ class DY_Model(object):
         val_dataset = utils.DYDataSet(
             val_dir,
             val_part,
-            utils.get_transforms(mode='valid', input_size=self.input_size, resize_size=self.input_size + self.add_size))
+            utils.get_transforms(mode='valid', input_size=self.input_size,
+                                 resize_size=self.input_size + self.add_size))
         val_loader = torch.utils.data.DataLoader(
             val_dataset,
             batch_size=self.batch_size,
@@ -171,20 +207,23 @@ class DY_Model(object):
         print('[+] trainning with total %d images' % len(train_dataset))
 
         self.model = get_model(self.model_name, pretrained=True)
-        criterion = torch.nn.CrossEntropyLoss().cuda()
+        criterion = torch.nn.CrossEntropyLoss(weight=weights).cuda()
         utils.train(self.model, train_loader, val_loader, criterion,
                     checkpoint_file=self.checkpoint_file, epochs=epochs)
 
-    def test_single_model(self, checkpoint_file, test_dir, test_csv, prediction_file_path='test_prediction.npy', ten_crop=False, prob=False):
+    def test_single_model(self, checkpoint_file, test_dir, test_csv,
+                          prediction_file_path='test_prediction.npy', ten_crop=False, prob=False):
 
         print('[+] checkpoint file:{0:s}'.format(checkpoint_file))
         transform = utils.get_transforms(
-            mode='valid', input_size=self.input_size, resize_size=self.input_size + self.add_size)
+            mode='valid', input_size=self.input_size,
+            resize_size=self.input_size + self.add_size)
 
         if(ten_crop):
             print('[+] Using Ten-Crop Testting strategy')
             transform = utils.get_transforms(
-                mode='test', input_size=self.input_size, resize_size=self.input_size + self.add_size)
+                mode='test', input_size=self.input_size,
+                resize_size=self.input_size + self.add_size)
 
         # get the data part of pd.DataFrame object
         test_array = pd.read_csv(test_csv).values
