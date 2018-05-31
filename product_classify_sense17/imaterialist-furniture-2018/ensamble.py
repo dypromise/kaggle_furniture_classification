@@ -28,52 +28,25 @@ train_list = ['res152_val_pred.npy',
               'senet154_val_pred.npy'
               ]
 
-# test_list = [
-
-#     'dense161_ck6.npy..npy',     # 'inceptionResnetv2_ck2.npy..npy',
-#     'resnext101_32x4d_ck1.npy..npy',
-#     # 'inceptionv4_ck1.npy..npy',     # 'resnext101_64x4d_ck1.npy..npy',
-#     'dense169_ck7.npy..npy',
-#     'dpn107_ck1.npy..npy',     # 'inceptionv4_ck2.npy..npy',
-#     'senet154_ck2.npy..npy',
-#     'dpn131_ck1.npy..npy',
-
-
-#     'inceptionv4_dp0.2_l2reg0.01_pred.npy',
-#     'se_resnet152_ck1.npy..npy',
-#     'dpn92_ck1.npy..npy',
-#     'inceptionv4_dp0.2_pred.npy',
-#     'se_resnext101_32x4d_ck1.npy..npy',     # 'dpn92_ck2.npy..npy',
-#     'inceptionv4_l2reg0.01_pred.npy',     # 'xception_ck1.npy..npy',
-#     'dpn98_ck1.npy..npy',
-#     'nasnet_ck1.npy..npy',
-#     'xception_dp0.2_l2reg0.01_pred.npy',     # 'dpn98_ck2.npy..npy',
-#     'res152_ck5.npy..npy',
-#     'xception_l2reg0.01_pred.npy',
-#     # 'res152_ck7.npy..npy',     'xception_pred.npy'
-#     'inceptionResnetv2_ck1.npy..npy',
-# ]
-
-test_list = [
-    'dpn107_ck2.npy..npy',
-    'dpn92_ck5.npy..npy',
-    'resnet152_ck8.npy..npy',
-    'se_resnet152_ck2.npy..npy',
-    'dpn107_ck4.npy..npy',
-    'dpn98_ck3.npy..npy',
-    'resnext101_32x4d_ck2.npy..npy',
-    'se_resnet152_ck4.npy..npy',
-    'dpn131_ck2.npy..npy',
-    'inceptionresnetv2_ck3.npy..npy',
-    'resnext101_32x4d_ck4.npy..npy',
-    'xception_ck2.npy..npy',
-    'dpn131_ck5.npy..npy',
-    'inceptionv4_ck3.npy..npy',
-    'resnext101_64x4d_ck2.npy..npy',
-    'dpn92_ck3.npy..npy',
-    'resnet152_ck10.npy..npy',
-    'senet154_ck3.npy..npy'
-]
+test_list = ['dpn107_ck2.npy..npy',
+             'dpn92_ck5.npy..npy',
+             'resnet152_ck8.npy..npy',
+             'se_resnet152_ck2.npy..npy',
+             'dpn107_ck4.npy..npy',
+             'dpn98_ck3.npy..npy',
+             'resnext101_32x4d_ck2.npy..npy',
+             'se_resnet152_ck4.npy..npy',
+             'dpn131_ck2.npy..npy',
+             'inceptionresnetv2_ck3.npy..npy',
+             'resnext101_32x4d_ck4.npy..npy',
+             'xception_ck2.npy..npy',
+             'dpn131_ck5.npy..npy',
+             'inceptionv4_ck3.npy..npy',
+             'resnext101_64x4d_ck2.npy..npy',
+             'dpn92_ck3.npy..npy',
+             'resnet152_ck10.npy..npy',
+             'senet154_ck3.npy..npy'
+             ]
 
 p_list = [os.path.join('/mnt/lustre17/yangkunlin/fur_dy/fur_pse2', pred_name)
           for pred_name in test_list]
@@ -125,8 +98,8 @@ def load_data(preds_list, mode='train'):
     Keyword Arguments:
         preds_list，mode {str} -- [description] (default: {'train'})
     Returns:
-        [turple] -- if mode is `train`, return train_test_split data parts;if mode is `test`,
-        return all data
+        [turple] -- if mode is `train`, return train_test_split data parts;if mode is 
+        `test`,return all data
     """
 
     X = []
@@ -202,8 +175,8 @@ def train_ensamble():
 
         if log_loss < min_loss:
             torch.save(model.state_dict(), best_checkpoint_file)
-            print(
-                f'[+] lr = {lr}, val loss improved from {min_loss:.5f} to {log_loss:.5f}. Saved!')
+            print(f'[+] lr = {lr}, val loss improved from {min_loss:.5f} '
+                  'to {log_loss:.5f}. Saved!')
             min_loss = log_loss
             patience = 0
         else:

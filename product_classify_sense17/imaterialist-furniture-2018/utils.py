@@ -163,7 +163,8 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30
                 filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
         else:
             optimizer = torch.optim.Adam(
-                filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=0.0001)
+                filter(lambda p: p.requires_grad, model.parameters()), lr=lr,
+                weight_decay=0.0001)
 
         # train for one epoch
         train_one_epoch(train_loader, model, criterion, optimizer, epoch)
@@ -173,7 +174,8 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30
 
         if log_loss < min_loss:
             torch.save(model.state_dict(), checkpoint_file)
-            print(f'[+] val loss improved from {min_loss:.5f} to {log_loss:.5f}. Saved!')
+            print(f'[+] val loss improved from {min_loss:.5f} to '
+                  '{log_loss:.5f}. Saved!')
             min_loss = log_loss
             patience = 0
         else:
@@ -267,7 +269,8 @@ def validate(val_loader, model, criterion):
                           i, len(val_loader), batch_time=batch_time, loss=losses,
                           top1=top1, top5=top5))
 
-        print('[+] avg val loss {loss_avg:.3f} Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'
+        print('[+] avg val loss {loss_avg:.3f} Prec@1 {top1.avg:.3f} '
+              'Prec@5 {top5.avg:.3f}'
               .format(loss_avg=losses.avg, top1=top1, top5=top5))
 
     return losses.avg

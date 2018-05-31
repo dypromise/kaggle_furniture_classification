@@ -16,8 +16,8 @@ parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 
 parser.add_argument('data', metavar='DIR',
                     help='path to dataset')
-parser.add_argument('--checkpoint-file', default='/home/dingyang/best_val_weights.pth', type=str,
-                    help='checkpoint file path (default: /home/dingyang/best_val_weights.pth)')
+parser.add_argument('--checkpoint-file', default='/home/dingyang/best_val_weights.pth',
+                    type=str, help='checkpoint file path')
 parser.add_argument('--model-name', '-a', metavar='ARCH', default='resnet18',
                     choices=model_names,
                     help='model architecture: ' +

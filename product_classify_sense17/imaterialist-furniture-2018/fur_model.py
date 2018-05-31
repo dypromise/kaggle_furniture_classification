@@ -31,16 +31,21 @@ weights = torch.tensor(np.array([
 
 class FinetuneModel(nn.Module):
 
-    def __init__(self, model_name, num_classes, net_cls, net_kwards):
+    def __init__(self, model_name, num_classes, net_cls, net_kwards, dropout=False):
         super().__init__()
 
         self.model_name = model_name
         original_model = net_cls(**net_kwards)
 
         if(model_name.startswith('resnet')):
-            self.net = original_model
-            self.net.classifier = nn.Linear(
-                self.net.fc.in_features, num_classes)
+            self.net = net_cls(pretrained=True)
+            if dropout:
+                self.net.fc = nn.Sequential(
+                    nn.Dropout(),
+                    nn.Linear(self.net.fc.in_features, num_classes),
+                )
+            else:
+                self.net.fc = nn.Linear(self.net.fc.in_features, num_classes)
 
         elif(model_name.startswith('dpn')):
             self.net = original_model
@@ -70,47 +75,30 @@ class FinetuneModel(nn.Module):
 
 model_dict = {
 
-    'resnet152': partial(FinetuneModel, 'resnet152', NB_CLASSES, pretrainedmodels.resnet152),
-
+    'resnet152': partial(FinetuneModel, 'resnet152', NB_CLASSES, M.resnet152),
     'inceptionv4': partial(FinetuneModel, 'inceptionv4', NB_CLASSES,
                            pretrainedmodels.inceptionv4),
-
     'inceptionresnetv2': partial(FinetuneModel, 'inceptionresnetv2', NB_CLASSES,
                                  pretrainedmodels.inceptionresnetv2),
-
     'dpn92': partial(FinetuneModel, 'dpn92', NB_CLASSES, pretrainedmodels.dpn92),
-
     'dpn98': partial(FinetuneModel, 'dpn98', NB_CLASSES, pretrainedmodels.dpn98),
-
     'dpn107': partial(FinetuneModel, 'dpn107', NB_CLASSES, pretrainedmodels.dpn107),
-
     'dpn131': partial(FinetuneModel, 'dpn131', NB_CLASSES, pretrainedmodels.dpn131),
-
-    'nasnet': partial(FinetuneModel, 'nasnet', NB_CLASSES,
-                      pretrainedmodels.nasnetalarge),
-
+    'nasnet': partial(FinetuneModel, 'nasnet', NB_CLASSES, pretrainedmodels.nasnetalarge),
     'senet154': partial(FinetuneModel, 'senet154', NB_CLASSES, pretrainedmodels.senet154),
-
     'densenet161': partial(FinetuneModel, 'densenet161', NB_CLASSES,
                            pretrainedmodels.densenet161),
-
     'densenet169': partial(FinetuneModel, 'densenet169', NB_CLASSES,
                            pretrainedmodels.densenet169),
-
     'densenet201': partial(FinetuneModel, 'densenet201', NB_CLASSES,
                            pretrainedmodels.densenet201),
-
     'xception': partial(FinetuneModel, 'xception', NB_CLASSES, pretrainedmodels.xception),
-
     'resnext101_32x4d': partial(FinetuneModel, 'resnext101_32x4d', NB_CLASSES,
                                 pretrainedmodels.resnext101_32x4d),
-
     'resnext101_64x4d': partial(FinetuneModel, 'resnext101_64x4d', NB_CLASSES,
                                 pretrainedmodels.resnext101_64x4d),
-
     'se_resnet152': partial(FinetuneModel, 'se_resnet152', NB_CLASSES,
                             pretrainedmodels.se_resnet152),
-
     'se_resnext101_32x4d': partial(FinetuneModel, 'se_resnext101_32x4d', NB_CLASSES,
                                    pretrainedmodels.se_resnext101_32x4d),
 
@@ -211,8 +199,9 @@ class DY_Model(object):
         utils.train(self.model, train_loader, val_loader, criterion,
                     checkpoint_file=self.checkpoint_file, epochs=epochs)
 
-    def test_single_model(self, checkpoint_file, test_dir, test_csv,
-                          prediction_file_path='test_prediction.npy', ten_crop=False, prob=False):
+    def test_single_model(self, checkpoint_file,
+                          test_dir, test_csv, prediction_file_path='test_prediction.npy',
+                          ten_crop=False, prob=False):
 
         print('[+] checkpoint file:{0:s}'.format(checkpoint_file))
         transform = utils.get_transforms(
