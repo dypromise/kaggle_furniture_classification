@@ -54,7 +54,6 @@ def get_transforms(mode='train', input_size=224, resize_size=256):
 
 
 class DYDataSet(Dataset):
-
     def __init__(self, root_dir, img_label_array, transform=None):
         """Our own dataset class.
         Arguments:
@@ -80,7 +79,8 @@ class DYDataSet(Dataset):
 
 
 class AverageMeter(object):
-    """Computes and stores the average and current value"""
+    """Computes and stores the average and current value
+    """
 
     def __init__(self):
         self.reset()
@@ -99,7 +99,8 @@ class AverageMeter(object):
 
 
 def accuracy(output, target, topk=(1,)):
-    """Computes the precision@k for the specified values of k"""
+    """Computes the precision@k for the specified values of k
+    """
     with torch.no_grad():
         maxk = max(topk)
         batch_size = target.size(0)
@@ -130,11 +131,12 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30
     min_loss = float("inf")
     lr = 0
     patience = 0
+
     for epoch in range(epochs):
         print(f'[+] epoch {epoch}')
+
         if epoch == 1:
             lr = 0.00003
-            print(f'[+] set lr={lr}')
             cnt = 0
             for param in model.parameters():
                 param.requires_grad = True
@@ -145,44 +147,54 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30
             patience = 0
             model.load_state_dict(torch.load(checkpoint_file))
             lr = lr / 10
-            print(f'[+] set lr={lr}')
+            print(f'[+] declining lr={lr}')
 
         if epoch == 0:
             lr = 0.001
-            print(f'[+] set lr={lr}')
             cnt = 0
             for name, param in model.named_parameters():
-                if(name not in last_layer_names):  # resnet
+                if(name not in last_layer_names):
                     param.requires_grad = False
                 else:
                     cnt += 1
             print(f'[+] params to be optimized: {cnt}')
-            # Training with multi GPUs
+
             model = torch.nn.DataParallel(model).cuda()
-            optimizer = torch.optim.Adam(
+            optimizer_nfc = None
+            optimizer_fc = torch.optim.Adam(
                 filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
         else:
-            optimizer = torch.optim.Adam(
-                filter(lambda p: p.requires_grad, model.parameters()), lr=lr,
-                weight_decay=0.0001)
+            params_nfc = []
+            params_fc = []
+            for name, param in model.named_parameters():
+                if(name not in last_layer_names):
+                    params_nfc.append(param)
+                else:
+                    params_fc.append(param)
 
-        # train for one epoch
-        train_one_epoch(train_loader, model, criterion, optimizer, epoch)
+            optimizer_nfc = torch.optim.Adam(
+                params=params_nfc, lr=lr, weight_decay=0.0001)
+            optimizer_fc = torch.optim.Adam(
+                params=params_fc, lr=10*lr, weight_decay=0.0001)
 
-        # evaluate on validation set
+        print(f'[+] lr={lr}')
+        train_one_epoch(train_loader, model, criterion,
+                        epoch, optimizer_fc, optimizer_nfc)
+
         log_loss = validate(val_loader, model, criterion)
 
         if log_loss < min_loss:
             torch.save(model.state_dict(), checkpoint_file)
             print(f'[+] val loss improved from {min_loss:.5f} to '
-                  '{log_loss:.5f}. Saved!')
+                  f'{log_loss:.5f}. Saved!')
             min_loss = log_loss
             patience = 0
         else:
             patience += 1
 
 
-def train_one_epoch(train_loader, model, criterion, optimizer, epoch):
+def train_one_epoch(train_loader, model, criterion, epoch, optimizer_fc,
+                    optimizer_nfc=None):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -211,9 +223,13 @@ def train_one_epoch(train_loader, model, criterion, optimizer, epoch):
         top5.update(prec5[0], input.size(0))
 
         # compute gradient and do SGD step
-        optimizer.zero_grad()
+        if(optimizer_nfc is not None):
+            optimizer_nfc.zero_grad()
+        optimizer_fc.zero_grad()
         loss.backward()
-        optimizer.step()
+        if(optimizer_nfc is not None):
+            optimizer_nfc.step()
+        optimizer_fc.step()
 
         # measure elapsed time
         batch_time.update(time.time() - end)
@@ -266,19 +282,18 @@ def validate(val_loader, model, criterion):
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                       'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
                       'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
-                          i, len(val_loader), batch_time=batch_time, loss=losses,
-                          top1=top1, top5=top5))
+                          i, len(val_loader), batch_time=batch_time,
+                          loss=losses, top1=top1, top5=top5))
 
         print('[+] avg val loss {loss_avg:.3f} Prec@1 {top1.avg:.3f} '
-              'Prec@5 {top5.avg:.3f}'
-              .format(loss_avg=losses.avg, top1=top1, top5=top5))
+              'Prec@5 {top5.avg:.3f}'.format(loss_avg=losses.avg,
+                                             top1=top1, top5=top5))
 
     return losses.avg
 
 
 def complement_prediction(test_whole_file, preds_csv, new_csv):
     with open(new_csv, 'w') as f3:
-
         f1 = open(test_whole_file, 'r')
         preds_frame = pd.read_csv(preds_csv)
 

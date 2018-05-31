@@ -74,7 +74,6 @@ class FinetuneModel(nn.Module):
 
 
 model_dict = {
-
     'resnet152': partial(FinetuneModel, 'resnet152', NB_CLASSES, M.resnet152),
     'inceptionv4': partial(FinetuneModel, 'inceptionv4', NB_CLASSES,
                            pretrainedmodels.inceptionv4),
@@ -84,15 +83,18 @@ model_dict = {
     'dpn98': partial(FinetuneModel, 'dpn98', NB_CLASSES, pretrainedmodels.dpn98),
     'dpn107': partial(FinetuneModel, 'dpn107', NB_CLASSES, pretrainedmodels.dpn107),
     'dpn131': partial(FinetuneModel, 'dpn131', NB_CLASSES, pretrainedmodels.dpn131),
-    'nasnet': partial(FinetuneModel, 'nasnet', NB_CLASSES, pretrainedmodels.nasnetalarge),
-    'senet154': partial(FinetuneModel, 'senet154', NB_CLASSES, pretrainedmodels.senet154),
+    'nasnet': partial(FinetuneModel, 'nasnet', NB_CLASSES,
+                      pretrainedmodels.nasnetalarge),
+    'senet154': partial(FinetuneModel, 'senet154', NB_CLASSES,
+                        pretrainedmodels.senet154),
     'densenet161': partial(FinetuneModel, 'densenet161', NB_CLASSES,
                            pretrainedmodels.densenet161),
     'densenet169': partial(FinetuneModel, 'densenet169', NB_CLASSES,
                            pretrainedmodels.densenet169),
     'densenet201': partial(FinetuneModel, 'densenet201', NB_CLASSES,
                            pretrainedmodels.densenet201),
-    'xception': partial(FinetuneModel, 'xception', NB_CLASSES, pretrainedmodels.xception),
+    'xception': partial(FinetuneModel, 'xception', NB_CLASSES,
+                        pretrainedmodels.xception),
     'resnext101_32x4d': partial(FinetuneModel, 'resnext101_32x4d', NB_CLASSES,
                                 pretrainedmodels.resnext101_32x4d),
     'resnext101_64x4d': partial(FinetuneModel, 'resnext101_64x4d', NB_CLASSES,
@@ -101,7 +103,6 @@ model_dict = {
                             pretrainedmodels.se_resnet152),
     'se_resnext101_32x4d': partial(FinetuneModel, 'se_resnext101_32x4d', NB_CLASSES,
                                    pretrainedmodels.se_resnext101_32x4d),
-
 }
 
 net_kwards = [{'pretrained': 'imagenet'}, {'pretrained': None}]
@@ -162,7 +163,6 @@ class DY_Model(object):
                                                     self.input_size, str(True)))
 
     def train_single_model(self, train_dir, train_csv, val_dir, val_csv, epochs):
-
         train_part = pd.read_csv(train_csv).values  # array type
         val_part = pd.read_csv(val_csv).values
 
@@ -199,10 +199,9 @@ class DY_Model(object):
         utils.train(self.model, train_loader, val_loader, criterion,
                     checkpoint_file=self.checkpoint_file, epochs=epochs)
 
-    def test_single_model(self, checkpoint_file,
-                          test_dir, test_csv, prediction_file_path='test_prediction.npy',
+    def test_single_model(self, checkpoint_file, test_dir, test_csv,
+                          prediction_file_path='test_prediction.npy',
                           ten_crop=False, prob=False):
-
         print('[+] checkpoint file:{0:s}'.format(checkpoint_file))
         transform = utils.get_transforms(
             mode='valid', input_size=self.input_size,

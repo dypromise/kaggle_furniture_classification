@@ -81,7 +81,8 @@ def extract_features(feature_extractor, data_dir, data_csv, prediction_file_path
     print('[+] Using Ten-Crop Extracting strategy')
 
     transform = utils.get_transforms(
-        mode='test', input_size=args.input_size, resize_size=args.input_size + args.add_size)
+        mode='test', input_size=args.input_size,
+        resize_size=args.input_size + args.add_size)
 
     data_array = pd.read_csv(data_csv).values
     dataset = utils.DYDataSet(

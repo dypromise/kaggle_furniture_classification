@@ -52,7 +52,8 @@ p_list = [os.path.join('/mnt/lustre17/yangkunlin/fur_dy/fur_pse2', pred_name)
           for pred_name in test_list]
 
 
-best_checkpoint_file = '/mnt/lustre17/yangkunlin/fur_dy/data/weighted_ensamble_best.pth'
+best_checkpoint_file = '/mnt/lustre17/yangkunlin/fur_dy/data/'
+'weighted_ensamble_best.pth'
 final_preds_csv = '/mnt/lustre17/yangkunlin/fur_dy/data/weighted_ensamble.csv'
 num_classes = 128
 batch_size = 64
@@ -95,13 +96,7 @@ class WeightedEnsambleModel(nn.Module):
 
 def load_data(preds_list, mode='train'):
     """ load data from npys, each npy file contains predictions of one model
-    Keyword Arguments:
-        preds_list，mode {str} -- [description] (default: {'train'})
-    Returns:
-        [turple] -- if mode is `train`, return train_test_split data parts;if mode is 
-        `test`,return all data
     """
-
     X = []
     for i, pred in enumerate(preds_list):
         arr = np.load(pred)
@@ -123,9 +118,8 @@ def load_data(preds_list, mode='train'):
 
 
 def train_ensamble():
-    """ train func of weighted ensamble
+    """ train func of weighted ensamble 
     """
-
     X_train, y_train, X_test, y_test = load_data(
         preds_list=p_list, mode='train')
     train_dataset = MyDataset(X_train, y_train)
@@ -176,7 +170,7 @@ def train_ensamble():
         if log_loss < min_loss:
             torch.save(model.state_dict(), best_checkpoint_file)
             print(f'[+] lr = {lr}, val loss improved from {min_loss:.5f} '
-                  'to {log_loss:.5f}. Saved!')
+                  f'to {log_loss:.5f}. Saved!')
             min_loss = log_loss
             patience = 0
         else:
@@ -192,7 +186,6 @@ def weighted_ensamble(preds_list, test_whole_file, new_csv):
         test_whole_file {[str]} -- complete test data list file in csv format
         new_csv {[str]} --  final submittion csv file
     """
-
     X, idxs = load_data(preds_list, mode='test')
     test_dataset = MyDataset(X, idxs)
     test_loader = torch.utils.data.DataLoader(
@@ -247,9 +240,6 @@ def weighted_ensamble(preds_list, test_whole_file, new_csv):
 
 
 def avg_ensamble(preds_list, test_whole_file, new_csv):
-    """ average ensamble strategy
-    """
-
     for i, pred in enumerate(preds_list):
         arr = np.load(pred)
         if(i == 0):
