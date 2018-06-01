@@ -7,7 +7,8 @@ parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 
 parser.add_argument('data', metavar='DIR',
                     help='path to dataset')
-parser.add_argument('--checkpoint-file', default='/home/dingyang/best_val_weights.pth',
+parser.add_argument('--checkpoint-file', default='/home/dingyang/ \
+    best_val_weights.pth',
                     type=str, help='checkpoint file path ')
 parser.add_argument('--model-name', '-a', metavar='ARCH', default='resnet18',
                     choices=model_names,
@@ -26,8 +27,8 @@ parser.add_argument('--add-size', default=32, type=int,
                     help='net add size (default: 32)')
 parser.add_argument('--test-prob', default=False, type=bool,
                     help='test output prob (default: False)')
-parser.add_argument('--test-predsfile', default='test_predictions.csv', type=str,
-                    help='train mode or test mode')
+parser.add_argument('--test-predsfile', default='test_predictions.csv',
+                    type=str, help='train mode or test mode')
 
 
 def main():
@@ -56,7 +57,7 @@ def main():
 
     if(args.mode == 'train'):
         furniture_model.train_single_model(
-            val_dir, val_csv, val_dir, val_csv, args.epochs)
+            train_dir, train_csv, val_dir, val_csv, args.epochs)
 
     elif(args.mode == 'test'):
         furniture_model.test_single_model(
@@ -66,7 +67,8 @@ def main():
 
         # print("complement prediction...")
         # utils.complement_prediction(
-        #     test_whole_file, preds_csv=prediction_file, new_csv=whole_prediction_csv)
+        # test_whole_file, preds_csv=prediction_file,
+        # new_csv=whole_prediction_csv)
 
 
 if __name__ == "__main__":

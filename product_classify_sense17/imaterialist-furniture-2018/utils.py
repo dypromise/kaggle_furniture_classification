@@ -127,7 +127,8 @@ def get_l2_regularization(variable_list):
     return l2_reg
 
 
-def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30):
+def train(model, train_loader, val_loader, criterion, checkpoint_file,
+          epochs=30):
     """training loop
     """
     min_loss = float("inf")
@@ -143,7 +144,7 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30
             for param in model.parameters():
                 param.requires_grad = True
                 cnt += 1
-            print(f'params to be optimized: {cnt}')
+            print(f'[+] params to be optimized: {cnt}')
 
         if patience == 2:
             patience = 0
