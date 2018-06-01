@@ -73,9 +73,10 @@ class MyDataset(Dataset):
 
 
 class WeightedEnsambleModel(nn.Module):
-    """ simple model to weighted ensamble the predictions from first stage
-    Extends:
-        nn.Module
+    """pytorch model for weighted ensamble 
+
+    first stage models will output many predictions, this class is the 
+    nn.module net to train the ensable weights
     """
 
     def __init__(self, num_classes, num_models):
@@ -95,30 +96,42 @@ class WeightedEnsambleModel(nn.Module):
 
 
 def load_data(preds_list, mode='train'):
-    """ load data from npys, each npy file contains predictions of one model
-    """
-    X = []
-    for i, pred in enumerate(preds_list):
-        arr = np.load(pred)
-        if(i == 0):
-            labels = np.array(arr[:, 0], dtype='int64').reshape((-1, 1))
-        X.append(np.array(arr[:, 1:], dtype='float64'))
+    """load data func
 
-    # M * N * num_classes -> N * C * M
-    X = np.transpose(np.array(X, dtype='float64'), (1, 2, 0))
-    if(mode == 'train'):
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, labels, test_size=0.2)
-        return X_train, y_train, X_test, y_test
-    elif(mode == 'test'):
-        return X, labels
-    else:
-        raise Exception(
-            "Attribute error: `mode` can only be either `train` or `test`")
+    Args:
+        preds_list: npy list from fisrt stage
+        mode: 'train' or 'test' (default: {'train'})
+
+    Returns:
+        if mode is 'train', return four train splits data, else return test set
+
+    Raises:
+        Exception: mode dont match
+    """
+        X = []
+        for i, pred in enumerate(preds_list):
+            arr = np.load(pred)
+            if(i == 0):
+                labels = np.array(arr[:, 0], dtype='int64').reshape((-1, 1))
+            X.append(np.array(arr[:, 1:], dtype='float64'))
+
+        # M * N * num_classes -> N * C * M
+        X = np.transpose(np.array(X, dtype='float64'), (1, 2, 0))
+        if(mode == 'train'):
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, labels, test_size=0.2)
+            return X_train, y_train, X_test, y_test
+        elif(mode == 'test'):
+            return X, labels
+        else:
+            raise Exception(
+                "Attribute error: `mode` can only be either `train` or `test`")
 
 
 def train_ensamble():
-    """ train func of weighted ensamble 
+    """weighted ensamble trainning func
+
+    each model's each class's predicted prob has one weight
     """
     X_train, y_train, X_test, y_test = load_data(
         preds_list=p_list, mode='train')
@@ -180,11 +193,13 @@ def train_ensamble():
 
 
 def weighted_ensamble(preds_list, test_whole_file, new_csv):
-    """ this func is to do weighted ensamble when func `train_ensamble` has been run.
-    Arguments:
-        preds_list {[npy]} -- the first satge preditions npy file list
-        test_whole_file {[str]} -- complete test data list file in csv format
-        new_csv {[str]} --  final submittion csv file
+    """to weighted ensamble predictions from first stage when `train_ensamble`
+    func has been run
+
+    Args:
+        preds_list: npys predcitions from first stage
+        test_whole_file: whole test data idxs
+        new_csv: final submission csv file 
     """
     X, idxs = load_data(preds_list, mode='test')
     test_dataset = MyDataset(X, idxs)

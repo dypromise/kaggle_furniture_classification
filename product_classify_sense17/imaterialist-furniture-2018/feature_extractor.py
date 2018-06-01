@@ -16,7 +16,8 @@ parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 
 parser.add_argument('data', metavar='DIR',
                     help='path to dataset')
-parser.add_argument('--checkpoint-file', default='/home/dingyang/best_val_weights.pth',
+parser.add_argument('--checkpoint-file', default='/home/dingyang/'
+                    'best_val_weights.pth',
                     type=str, help='checkpoint file path')
 parser.add_argument('--model-name', '-a', metavar='ARCH', default='resnet18',
                     choices=model_names,
@@ -76,10 +77,9 @@ def get_feature_extractor(model_name, checkpoint_file):
     return extractor_module.cuda()
 
 
-def extract_features(feature_extractor, data_dir, data_csv, prediction_file_path):
-
+def extract_features(feature_extractor, data_dir, data_csv,
+                     prediction_file_path):
     print('[+] Using Ten-Crop Extracting strategy')
-
     transform = utils.get_transforms(
         mode='test', input_size=args.input_size,
         resize_size=args.input_size + args.add_size)

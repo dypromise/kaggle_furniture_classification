@@ -31,7 +31,8 @@ weights = torch.tensor(np.array([
 
 class FinetuneModel(nn.Module):
 
-    def __init__(self, model_name, num_classes, net_cls, net_kwards, dropout=False):
+    def __init__(self, model_name, num_classes, net_cls, net_kwards,
+                 dropout=False):
         super().__init__()
 
         self.model_name = model_name
@@ -49,8 +50,9 @@ class FinetuneModel(nn.Module):
 
         elif(model_name.startswith('dpn')):
             self.net = original_model
-            self.net.classifier = nn.Conv2d(
-                self.net.classifier.in_channels, num_classes, kernel_size=1, bias=True)
+            self.net.classifier = nn.Conv2d(self.net.classifier.in_channels,
+                                            num_classes, kernel_size=1,
+                                            bias=True)
 
         elif(model_name.startswith('dense')):
             self.net = original_model
@@ -77,12 +79,17 @@ model_dict = {
     'resnet152': partial(FinetuneModel, 'resnet152', NB_CLASSES, M.resnet152),
     'inceptionv4': partial(FinetuneModel, 'inceptionv4', NB_CLASSES,
                            pretrainedmodels.inceptionv4),
-    'inceptionresnetv2': partial(FinetuneModel, 'inceptionresnetv2', NB_CLASSES,
+    'inceptionresnetv2': partial(FinetuneModel, 'inceptionresnetv2',
+                                 NB_CLASSES,
                                  pretrainedmodels.inceptionresnetv2),
-    'dpn92': partial(FinetuneModel, 'dpn92', NB_CLASSES, pretrainedmodels.dpn92),
-    'dpn98': partial(FinetuneModel, 'dpn98', NB_CLASSES, pretrainedmodels.dpn98),
-    'dpn107': partial(FinetuneModel, 'dpn107', NB_CLASSES, pretrainedmodels.dpn107),
-    'dpn131': partial(FinetuneModel, 'dpn131', NB_CLASSES, pretrainedmodels.dpn131),
+    'dpn92': partial(FinetuneModel, 'dpn92', NB_CLASSES,
+                     pretrainedmodels.dpn92),
+    'dpn98': partial(FinetuneModel, 'dpn98', NB_CLASSES,
+                     pretrainedmodels.dpn98),
+    'dpn107': partial(FinetuneModel, 'dpn107', NB_CLASSES,
+                      pretrainedmodels.dpn107),
+    'dpn131': partial(FinetuneModel, 'dpn131', NB_CLASSES,
+                      pretrainedmodels.dpn131),
     'nasnet': partial(FinetuneModel, 'nasnet', NB_CLASSES,
                       pretrainedmodels.nasnetalarge),
     'senet154': partial(FinetuneModel, 'senet154', NB_CLASSES,
@@ -101,7 +108,8 @@ model_dict = {
                                 pretrainedmodels.resnext101_64x4d),
     'se_resnet152': partial(FinetuneModel, 'se_resnet152', NB_CLASSES,
                             pretrainedmodels.se_resnet152),
-    'se_resnext101_32x4d': partial(FinetuneModel, 'se_resnext101_32x4d', NB_CLASSES,
+    'se_resnext101_32x4d': partial(FinetuneModel, 'se_resnext101_32x4d',
+                                   NB_CLASSES,
                                    pretrainedmodels.se_resnext101_32x4d),
 }
 
@@ -158,11 +166,14 @@ class DY_Model(object):
               '\t\tBatch size: {1:d}\n'
               '\t\tCheckpoint file: {2:s}\n'
               '\t\tInput size: {3:d}\n'
-              '\t\tData augmentation: {4:s}'.format(self.model_name, self.batch_size,
+              '\t\tData augmentation: {4:s}'.format(self.model_name,
+                                                    self.batch_size,
                                                     self.checkpoint_file,
-                                                    self.input_size, str(True)))
+                                                    self.input_size,
+                                                    str(True)))
 
-    def train_single_model(self, train_dir, train_csv, val_dir, val_csv, epochs):
+    def train_single_model(self, train_dir, train_csv, val_dir, val_csv,
+                           epochs=30):
         train_part = pd.read_csv(train_csv).values  # array type
         val_part = pd.read_csv(val_csv).values
 
@@ -241,17 +252,15 @@ class DY_Model(object):
             for i, (input, labels) in enumerate(test_loader):  # tensor type
                 print('testting batch: %d/%d' %
                       (i, len(test_dataset) / self.batch_size))
-
                 input = input.cuda()
-
                 if(ten_crop):
                     bs, ncrops, c, h, w = input.size()
                     input = input.view(-1, c, h, w)
+                    # view to 2-D tensor
                     output = self.model(input).view(
-                        bs, ncrops, -1).mean(1).view(bs, -1)  # view to 2-D tensor
+                        bs, ncrops, -1).mean(1).view(bs, -1)
                 else:
                     output = self.model(input)  # 2-D tensor
-
                 if(not prob):
                     pred = output.topk(1)[-1]  # pytorch tensor type
                 else:

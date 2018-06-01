@@ -21,8 +21,10 @@ last_layer_names = ['net.last_linear.weight', 'net.last_linear.bias',
                     'net.classifier.weight', 'net.classifier.bias',
                     'net.fc.weight', 'net.fc.bias',
 
-                    'module.net.last_linear.weight', 'module.net.last_linear.bias',
-                    'module.net.classifier.weight', 'module.net.classifier.bias',
+                    'module.net.last_linear.weight',
+                    'module.net.last_linear.bias',
+                    'module.net.classifier.weight',
+                    'module.net.classifier.bias',
                     'module.net.fc.weight', 'module.net.fc.bias', ]
 
 
@@ -56,10 +58,13 @@ def get_transforms(mode='train', input_size=224, resize_size=256):
 
 class DYDataSet(Dataset):
     def __init__(self, root_dir, img_label_array, transform=None):
-        """Our own dataset class.
-        Arguments:
-            root_dir {str} -- image data root dir.
-            img_label_array {array} -- 2D array
+        """DYDataSet init
+
+        Args:
+            root_dir: data root dir
+            img_label_array: 2d array, 1st col contains img name, 2cd col 
+            contains label
+            transform: torchvision.transform (default: {None})
         """
         self.img_frames = img_label_array
         self.root_dir = root_dir
@@ -80,9 +85,6 @@ class DYDataSet(Dataset):
 
 
 class AverageMeter(object):
-    """Computes and stores the average and current value
-    """
-
     def __init__(self):
         self.reset()
 
@@ -99,16 +101,27 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-def accuracy(output, target, topk=(1,)):
-    """Computes the precision@k for the specified values of k
+def accuracy(output, label, topk=(1,)):
+    """acc compute func
+
+    this func can compute accs from model's output and label
+
+    Args:
+        output: model's output in prob
+        label: this sample's label
+        topk: top'k acc would be computed (default: {(1,)})
+
+    Returns:
+        topk's result
+        list
     """
     with torch.no_grad():
         maxk = max(topk)
-        batch_size = target.size(0)
+        batch_size = label.size(0)
 
         _, pred = output.topk(maxk, 1, True, True)
         pred = pred.t()
-        correct = pred.eq(target.view(1, -1).expand_as(pred))
+        correct = pred.eq(label.view(1, -1).expand_as(pred))
 
         res = []
         for k in topk:
@@ -127,9 +140,20 @@ def get_l2_regularization(variable_list):
     return l2_reg
 
 
-def train(model, train_loader, val_loader, criterion, checkpoint_file,
-          epochs=30):
-    """training loop
+def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs):
+    """whole train loop for any model
+
+    this func is the 'trainning' func for any pytorch model. Given model, data_
+    loader, criterion(loss), checkpoint_file and train_cpochs, this func will
+    train modle with many 'epochs'
+
+    Args:
+        model: nn.module, the model to train
+        train_loader: train dataloader
+        val_loader: validation dataloder
+        criterion: loss func e.g. torch.nn.XXXLoss()
+        checkpoint_file: the checkpoint file to save and reload
+        epochs: how many epochs the model will train
     """
     min_loss = float("inf")
     lr = 0
@@ -197,6 +221,20 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file,
 
 def train_one_epoch(train_loader, model, criterion, epoch, optimizer_fc,
                     optimizer_nfc=None):
+    """just train one epoch in trainning peroid
+
+    This func will be called in func `train` every epoch. We adopt the strategy
+    that params have different learning rate between fc layers and non-fc 
+    layers, so there have two optimizers 
+
+    Args:
+        train_loader: train dataloader
+        model: nn.module
+        criterion: loss func 
+        epoch: which epoch when this func called 
+        optimizer_fc: optimizer of fc layer params
+        optimizer_nfc: optimizer of non-fc layer params (default: {None})
+    """
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
