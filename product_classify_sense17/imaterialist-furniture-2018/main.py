@@ -56,7 +56,7 @@ def main():
 
     if(args.mode == 'train'):
         furniture_model.train_single_model(
-            train_dir, train_csv, val_dir, val_csv, args.epochs)
+            val_dir, val_csv, val_dir, val_csv, args.epochs)
 
     elif(args.mode == 'test'):
         furniture_model.test_single_model(

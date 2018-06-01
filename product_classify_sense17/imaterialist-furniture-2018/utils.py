@@ -19,10 +19,11 @@ normalize = transforms.Normalize(
 
 last_layer_names = ['net.last_linear.weight', 'net.last_linear.bias',
                     'net.classifier.weight', 'net.classifier.bias',
-                    'net.fc.weight', 'net.fc.bias']
+                    'net.fc.weight', 'net.fc.bias',
 
-l2_reg_param_names = ['module.net.last_linear.weight', 'module.net.last_linear.bias',
-                      'module.net.classifier.weight', 'module.net.classifier.bias']
+                    'module.net.last_linear.weight', 'module.net.last_linear.bias',
+                    'module.net.classifier.weight', 'module.net.classifier.bias',
+                    'module.net.fc.weight', 'module.net.fc.bias', ]
 
 
 def get_transforms(mode='train', input_size=224, resize_size=256):
@@ -127,7 +128,8 @@ def get_l2_regularization(variable_list):
 
 
 def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30):
-    # training loop
+    """training loop
+    """
     min_loss = float("inf")
     lr = 0
     patience = 0
@@ -147,7 +149,7 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30
             patience = 0
             model.load_state_dict(torch.load(checkpoint_file))
             lr = lr / 10
-            print(f'[+] declining lr={lr}')
+            print(f'[*] declining lr={lr}')
 
         if epoch == 0:
             lr = 0.001
@@ -182,7 +184,6 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs=30
                         epoch, optimizer_fc, optimizer_nfc)
 
         log_loss = validate(val_loader, model, criterion)
-
         if log_loss < min_loss:
             torch.save(model.state_dict(), checkpoint_file)
             print(f'[+] val loss improved from {min_loss:.5f} to '
