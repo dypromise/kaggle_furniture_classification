@@ -52,8 +52,8 @@ p_list = [os.path.join('/mnt/lustre17/yangkunlin/fur_dy/fur_pse2', pred_name)
           for pred_name in test_list]
 
 
-best_checkpoint_file = '/mnt/lustre17/yangkunlin/fur_dy/data/'
-'weighted_ensamble_best.pth'
+best_checkpoint_file = '/mnt/lustre17/yangkunlin/fur_dy/data/ \
+weighted_ensamble_best.pth'
 final_preds_csv = '/mnt/lustre17/yangkunlin/fur_dy/data/weighted_ensamble.csv'
 num_classes = 128
 batch_size = 64
@@ -108,24 +108,24 @@ def load_data(preds_list, mode='train'):
     Raises:
         Exception: mode dont match
     """
-        X = []
-        for i, pred in enumerate(preds_list):
-            arr = np.load(pred)
-            if(i == 0):
-                labels = np.array(arr[:, 0], dtype='int64').reshape((-1, 1))
-            X.append(np.array(arr[:, 1:], dtype='float64'))
+    X = []
+    for i, pred in enumerate(preds_list):
+        arr = np.load(pred)
+        if(i == 0):
+            labels = np.array(arr[:, 0], dtype='int64').reshape((-1, 1))
+        X.append(np.array(arr[:, 1:], dtype='float64'))
 
         # M * N * num_classes -> N * C * M
-        X = np.transpose(np.array(X, dtype='float64'), (1, 2, 0))
-        if(mode == 'train'):
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, labels, test_size=0.2)
-            return X_train, y_train, X_test, y_test
-        elif(mode == 'test'):
-            return X, labels
-        else:
-            raise Exception(
-                "Attribute error: `mode` can only be either `train` or `test`")
+    X = np.transpose(np.array(X, dtype='float64'), (1, 2, 0))
+    if(mode == 'train'):
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, labels, test_size=0.2)
+        return X_train, y_train, X_test, y_test
+    elif(mode == 'test'):
+        return X, labels
+    else:
+        raise Exception(
+            "Attribute error: `mode` can only be either `train` or `test`")
 
 
 def train_ensamble():
