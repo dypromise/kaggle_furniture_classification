@@ -206,9 +206,11 @@ class DY_Model(object):
         print('[+] trainning with total %d images' % len(train_dataset))
 
         self.model = get_model(self.model_name, pretrained=True)
-        criterion = torch.nn.CrossEntropyLoss(weight=weights).cuda()
-        utils.train(self.model, train_loader, val_loader, criterion,
-                    checkpoint_file=self.checkpoint_file, epochs=epochs)
+        train_criterion = torch.nn.CrossEntropyLoss(weight=weights).cuda()
+        val_criterion = torch.nn.CrossEntropyLoss().cuda()
+        utils.train(self.model, train_loader, val_loader, train_criterion,
+                    val_criterion, checkpoint_file=self.checkpoint_file,
+                    epochs=epochs)
 
     def test_single_model(self, checkpoint_file, test_dir, test_csv,
                           prediction_file_path='test_prediction.npy',
@@ -224,7 +226,7 @@ class DY_Model(object):
                 mode='test', input_size=self.input_size,
                 resize_size=self.input_size + self.add_size)
 
-        # get the data part of pd.DataFrame object
+        # get the value of pd.DataFrame object
         test_array = pd.read_csv(test_csv).values
         test_dataset = utils.DYDataSet(
             test_dir,
@@ -256,7 +258,6 @@ class DY_Model(object):
                 if(ten_crop):
                     bs, ncrops, c, h, w = input.size()
                     input = input.view(-1, c, h, w)
-                    # view to 2-D tensor
                     output = self.model(input).view(
                         bs, ncrops, -1).mean(1).view(bs, -1)
                 else:
@@ -271,6 +272,7 @@ class DY_Model(object):
 
         all_labels = torch.cat(all_labels, dim=0).numpy()
         all_idxs = torch.cat(all_idxs, dim=0).numpy().reshape(-1, 1)
+
         res = np.concatenate((all_idxs, all_labels), axis=1)
         print('writing pred file %s ...' % prediction_file_path)
         np.save(prediction_file_path, res)

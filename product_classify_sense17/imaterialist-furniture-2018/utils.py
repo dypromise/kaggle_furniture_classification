@@ -140,7 +140,8 @@ def get_l2_regularization(variable_list):
     return l2_reg
 
 
-def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs):
+def train(model, train_loader, val_loader, train_criterion, val_criterion,
+          checkpoint_file, epochs):
     """whole train loop for any model
 
     this func is the 'trainning' func for any pytorch model. Given model, data_
@@ -151,7 +152,8 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs):
         model: nn.module, the model to train
         train_loader: train dataloader
         val_loader: validation dataloder
-        criterion: loss func e.g. torch.nn.XXXLoss()
+        train_criterion: loss func for train
+        val_criterion: loss func for validation
         checkpoint_file: the checkpoint file to save and reload
         epochs: how many epochs the model will train
     """
@@ -205,10 +207,10 @@ def train(model, train_loader, val_loader, criterion, checkpoint_file, epochs):
                 params=params_fc, lr=10*lr, weight_decay=0.0001)
 
         print(f'[+] lr={lr}')
-        train_one_epoch(train_loader, model, criterion,
+        train_one_epoch(train_loader, model, train_criterion,
                         epoch, optimizer_fc, optimizer_nfc)
 
-        log_loss = validate(val_loader, model, criterion)
+        log_loss = validate(val_loader, model, val_criterion)
         if log_loss < min_loss:
             torch.save(model.state_dict(), checkpoint_file)
             print(f'[+] val loss improved from {min_loss:.5f} to '
